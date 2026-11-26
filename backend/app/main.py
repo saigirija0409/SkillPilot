@@ -40,7 +40,7 @@ app.include_router(health_router)
 
 
 @app.get("/")
-def root() -> dict[str, str]:
+def root() -> dict[str, object]:
     """Basic root endpoint redirecting callers to health and API docs."""
     return {
         "message": "SkillPilot Backend API is running",

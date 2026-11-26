@@ -1,0 +1,1 @@
+"""SkillPilot FastAPI backend package."""

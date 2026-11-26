@@ -1,0 +1,64 @@
+# Secrets & local environment files (NEVER commit)
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!.env.*.example
+!**/.env.example
+!**/.env.*.example
+frontend/.env.local
+frontend/.env*.local
+!frontend/.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+*.pem
+*.key
+*service-role*.json
+
+# Python virtual environments & caches
+.venv/
+venv/
+env/
+backend/.venv/
+backend/venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node.js & Next.js
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+frontend/out/
+frontend/build/
+.vercel/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
+
+# Uploaded resumes, local docs & temporary runtime files
+/uploads/
+/backend/uploads/
+/backend/resumes/
+/resumes/
+*.pdf
+/tmp/
+logs/
+*.log
+
+# OS & IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

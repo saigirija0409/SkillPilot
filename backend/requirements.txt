@@ -12,7 +12,10 @@ supabase>=2.10.0
 PyJWT[crypto]>=2.10.0
 httpx>=0.27.0
 
-# Resume Parsing & ML Matching (verified compatible with Python 3.13.15)
-pymupdf>=1.24.0
-scikit-learn>=1.5.0
-sentence-transformers>=3.0.0
+# Resume Parsing & ML Matching (verified compatible with Python 3.13+)
+pymupdf>=1.24.0           # PDF text extraction (fitz)
+scikit-learn>=1.5.0       # ML utilities (cosine_similarity, TF-IDF)
+sentence-transformers>=3.0.0  # Semantic embedding for recommendations
+
+# Optional but recommended
+numpy>=1.26.0             # Required by sentence-transformers / sklearn

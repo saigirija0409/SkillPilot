@@ -1,9 +1,17 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Lock, Users } from "lucide-react";
+import Link from "next/link";
+import { ShieldCheck, Users } from "lucide-react";
 
-import { StatusBadge } from "@/components/status/StatusBadge";
+import {
+  Button,
+  Card,
+  CompassGrowthIllustration,
+  EditorialHeading,
+  PastelCard,
+  StatusLabel,
+} from "@/components/ui";
 import { fetchManagerCheck } from "@/services/api";
 import { getCurrentSessionAccessToken } from "@/services/auth";
 import type { AccountType } from "@/types/database";
@@ -57,61 +65,65 @@ export function ManagerDashboardPlaceholder({
     };
   }, []);
 
-  const isManager = accountType === "manager" || accountType === "admin";
-
-  if (!isManager) {
-    return (
-      <section className="rounded-xl border border-rose-200 bg-white p-6 shadow-sm">
-        <div className="flex items-start gap-3">
-          <Lock className="mt-0.5 h-6 w-6 text-rose-600" />
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">
-              Manager Access Restricted (403)
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">
-              Your current account role is{" "}
-              <strong className="uppercase">{accountType}</strong>. Manager
-              permissions cannot be self-selected during signup and must be
-              assigned by an organization administrator in Supabase.
-            </p>
-            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
-              <strong>Backend Enforcement Check:</strong> {backendStatus}
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-        <div className="flex items-center gap-2.5">
-          <Users className="h-5 w-5 text-indigo-600" />
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">
-              Manager Workforce Intelligence (Phase 2 Placeholder)
-            </h1>
-            <p className="text-xs text-slate-500">
-              Organization ID:{" "}
-              <code className="font-mono">
-                {organizationId || "Unassigned"}
-              </code>
-            </p>
-          </div>
-        </div>
+    <div className="space-y-8">
+      <EditorialHeading
+        eyebrow="Organization • Workforce Overview"
+        title="Manager"
+        italicAccent="Workforce Intelligence"
+        subtitle="Authorized organization view. Real-time team heatmaps and consented employee analytics connect in Phase 5."
+        actions={
+          <StatusLabel
+            tone={backendAuthorized ? "verified" : "in_progress"}
+            label={backendAuthorized ? "Manager JWT Verified" : "Verifying API"}
+          />
+        }
+      />
 
-        <StatusBadge
-          tone={backendAuthorized ? "healthy" : "warning"}
-          label={backendAuthorized ? "Manager Verified" : "Checking"}
+      <div className="grid gap-6 lg:grid-cols-12">
+        <PastelCard
+          tone="forest"
+          eyebrow={`Role: ${accountType}`}
+          title="Manager access verified"
+          description={`FastAPI status: ${backendStatus}. Organization ID: ${organizationId || "Unassigned"}.`}
+          illustration={<CompassGrowthIllustration className="h-20 w-20" />}
+          className="lg:col-span-6"
         />
-      </div>
 
-      <p className="mt-4 text-sm text-slate-600">
-        Your manager role is verified on both Next.js and FastAPI (
-        {backendStatus}). Team skill heatmaps, consented progress feeds, and
-        Supabase Realtime updates will be implemented in Phase 5.
-      </p>
-    </section>
+        <Card padding="lg" className="lg:col-span-6 space-y-4">
+          <div className="flex items-center gap-2.5">
+            <Users className="h-5 w-5 text-forest" />
+            <h2 className="font-editorial text-2xl text-ink">
+              Portal Foundations Active
+            </h2>
+          </div>
+          <p className="text-sm leading-relaxed text-muted">
+            All 11 manager routes are navigable and protected by server-side
+            role checks and PostgreSQL Row Level Security. Team heatmaps,
+            budget simulations, and Realtime activity feeds are scheduled for
+            Phase 5—no fabricated team data is shown here.
+          </p>
+          <div className="flex items-center gap-2 rounded-xl border border-line bg-canvas p-3 text-xs text-ink">
+            <ShieldCheck className="h-4 w-4 text-forest shrink-0" />
+            <span>
+              Managers only access consented team data inside their assigned
+              organization.
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-3 pt-1">
+            <Link href="/manager/teams">
+              <Button variant="secondary" size="sm">
+                Teams &amp; Employees
+              </Button>
+            </Link>
+            <Link href="/manager/skills">
+              <Button variant="primary" size="sm">
+                Skill Heatmap
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    </div>
   );
 }

@@ -113,6 +113,12 @@ export async function fetchUserProfileBundle(
 }
 
 export async function fetchDemoOpportunitiesPreview(): Promise<Opportunity[]> {
+  return fetchAllCatalogOpportunities(6);
+}
+
+export async function fetchAllCatalogOpportunities(
+  limitCount = 50
+): Promise<Opportunity[]> {
   const supabase = createSupabaseBrowserClient();
   const { data, error } = await withRequestTimeout(
     Promise.resolve(
@@ -120,7 +126,7 @@ export async function fetchDemoOpportunitiesPreview(): Promise<Opportunity[]> {
         .from("opportunities")
         .select("*")
         .order("created_at", { ascending: true })
-        .limit(6)
+        .limit(limitCount)
     ),
     "Loading learning opportunities"
   );
@@ -129,6 +135,36 @@ export async function fetchDemoOpportunitiesPreview(): Promise<Opportunity[]> {
     throw new Error(error.message);
   }
   return (data ?? []) as Opportunity[];
+}
+
+export interface RoleSkillRequirement {
+  id: string;
+  role_id: string;
+  skill_id: string;
+  required_level: number;
+  importance_weight: number;
+  skills: Skill | null;
+}
+
+export async function fetchRoleSkillRequirements(
+  roleId: string
+): Promise<RoleSkillRequirement[]> {
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await withRequestTimeout(
+    Promise.resolve(
+      supabase
+        .from("role_skills")
+        .select("id, role_id, skill_id, required_level, importance_weight, skills(*)")
+        .eq("role_id", roleId)
+        .order("importance_weight", { ascending: false })
+    ),
+    "Loading role skill benchmarks"
+  );
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return (data ?? []) as unknown as RoleSkillRequirement[];
 }
 
 export interface SaveProfilePayload {

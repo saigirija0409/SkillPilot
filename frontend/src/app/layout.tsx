@@ -1,5 +1,23 @@
 import type { Metadata } from "next";
+import { Instrument_Serif, Manrope } from "next/font/google";
+
+import { MotionProvider } from "@/components/ui/MotionPrimitives";
 import "./globals.css";
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["normal", "italic"],
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-manrope",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "SkillPilot — Agentic AI Upskilling & Workforce Intelligence",
@@ -13,8 +31,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full bg-slate-50 text-slate-900">{children}</body>
+    <html
+      lang="en"
+      className={`${instrumentSerif.variable} ${manrope.variable} h-full antialiased`}
+    >
+      <body className="min-h-full bg-canvas font-sans text-ink selection:bg-pistachio selection:text-ink">
+        <MotionProvider>{children}</MotionProvider>
+      </body>
     </html>
   );
 }

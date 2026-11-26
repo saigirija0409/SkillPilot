@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { FileText, Lock, Trash2, Upload, ExternalLink } from "lucide-react";
+import { ExternalLink, FileText, Lock, Trash2, UploadCloud } from "lucide-react";
 
+import { Button, StatusLabel } from "@/components/ui";
 import {
   createResumeSignedUrl,
   deletePrivateResume,
@@ -23,13 +24,12 @@ export function ResumeManagerCard({
   onResumesChanged,
 }: ResumeManagerCardProps) {
   const [uploading, setUploading] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
+  async function processFile(file: File | undefined) {
     if (!file) return;
 
     const validationError = validatePdfResumeFile(file);
@@ -58,6 +58,19 @@ export function ResumeManagerCard({
     } finally {
       setUploading(false);
     }
+  }
+
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    await processFile(file);
+  }
+
+  async function handleDrop(event: React.DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    setDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    await processFile(file);
   }
 
   async function handleOpenSigned(resume: ResumeRecord) {
@@ -91,68 +104,95 @@ export function ResumeManagerCard({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="space-y-4 rounded-2xl border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="flex items-center gap-2 text-base font-semibold text-slate-900">
-            <Lock className="h-4 w-4 text-emerald-600" />
+          <h3 className="flex items-center gap-2 text-base font-bold text-ink">
+            <Lock className="h-4 w-4 text-forest" />
             Private PDF Resume Storage
           </h3>
-          <p className="mt-1 text-xs text-slate-600">
-            PDF only, max 5 MB. Stored in a private Supabase Storage bucket
-            scoped to your account (AI extraction runs in Phase 3).
+          <p className="mt-1 text-xs leading-relaxed text-muted">
+            PDF only, max 5 MB. Stored in your private Supabase bucket scoped to
+            your account (AI skill extraction arrives in Phase 3).
           </p>
         </div>
-
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">
-          <Upload className="h-4 w-4" />
-          {uploading ? "Uploading..." : "Upload PDF"}
-          <input
-            type="file"
-            accept=".pdf,application/pdf"
-            disabled={uploading}
-            onChange={(e) => void handleFileChange(e)}
-            className="hidden"
-          />
-        </label>
+        <StatusLabel tone="verified" label="Owner-Only Bucket" />
       </div>
 
+      <label
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => void handleDrop(e)}
+        className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition ${
+          dragging
+            ? "border-forest bg-forest-soft"
+            : "border-line-strong bg-canvas/70 hover:border-forest/60 hover:bg-surface-muted/50"
+        }`}
+      >
+        <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-forest">
+          <UploadCloud className="h-5 w-5" />
+        </div>
+        <p className="text-sm font-semibold text-ink">
+          {uploading
+            ? "Uploading PDF securely..."
+            : "Drag & drop your PDF resume here, or click to browse"}
+        </p>
+        <p className="mt-1 text-xs text-muted">
+          Maximum file size 5 MB • Never exposed via public URLs
+        </p>
+        <input
+          type="file"
+          accept=".pdf,application/pdf"
+          disabled={uploading}
+          onChange={(e) => void handleFileChange(e)}
+          className="hidden"
+        />
+      </label>
+
       {error ? (
-        <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+        <p
+          role="alert"
+          className="rounded-xl border border-[var(--status-attention-border)] bg-[var(--status-attention-bg)] px-3.5 py-2.5 text-xs font-medium text-[var(--status-attention-text)]"
+        >
           {error}
         </p>
       ) : null}
 
       {statusMessage ? (
-        <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+        <p
+          role="status"
+          className="rounded-xl border border-[var(--status-verified-border)] bg-[var(--status-verified-bg)] px-3.5 py-2.5 text-xs font-medium text-[var(--status-verified-text)]"
+        >
           {statusMessage}
         </p>
       ) : null}
 
       {resumes.length === 0 ? (
-        <p className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
-          No resume uploaded yet. Uploading a resume is optional during
-          onboarding.
+        <p className="rounded-xl border border-line bg-canvas px-4 py-3 text-xs text-muted">
+          No resume uploaded yet. Uploading a PDF is optional during onboarding.
         </p>
       ) : (
-        <ul className="mt-4 space-y-2">
+        <ul className="space-y-2.5">
           {resumes.map((resume) => (
             <li
               key={resume.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-canvas px-4 py-3 text-sm"
             >
-              <div className="flex items-center gap-2.5">
-                <FileText className="h-4 w-4 text-indigo-600" />
+              <div className="flex items-center gap-3">
+                <FileText className="h-4 w-4 text-forest" />
                 <div>
-                  <p className="font-medium text-slate-900">
-                    {resume.file_name}{" "}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-ink">
+                      {resume.file_name}
+                    </span>
                     {resume.is_active ? (
-                      <span className="ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
-                        Active
-                      </span>
+                      <StatusLabel tone="verified" label="Active" />
                     ) : null}
-                  </p>
-                  <p className="text-xs text-slate-500">
+                  </div>
+                  <p className="text-xs text-muted">
                     {(resume.file_size_bytes / 1024).toFixed(1)} KB • Status:{" "}
                     {resume.parse_status}
                   </p>
@@ -160,24 +200,25 @@ export function ResumeManagerCard({
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
+                <Button
+                  size="sm"
+                  variant="secondary"
                   disabled={busyId === resume.id}
+                  leftIcon={<ExternalLink className="h-3.5 w-3.5" />}
                   onClick={() => void handleOpenSigned(resume)}
-                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
                 >
-                  <ExternalLink className="h-3.5 w-3.5" />
                   Private View
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
                   disabled={busyId === resume.id}
+                  leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                  className="text-[#8C371C] hover:bg-[var(--status-attention-bg)]"
                   onClick={() => void handleDelete(resume)}
-                  className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2.5 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
                   Delete
-                </button>
+                </Button>
               </div>
             </li>
           ))}

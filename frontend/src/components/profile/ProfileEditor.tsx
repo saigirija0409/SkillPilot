@@ -1,10 +1,20 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Loader2, Save } from "lucide-react";
+import { Bell, RefreshCw, RotateCcw, Save, ShieldCheck } from "lucide-react";
 
 import { ResumeManagerCard } from "@/components/resumes/ResumeManagerCard";
-import { StatusBadge } from "@/components/status/StatusBadge";
+import {
+  Button,
+  Card,
+  EditorialHeading,
+  Input,
+  Select,
+  SkeletonCard,
+  SkillChip,
+  StatusLabel,
+} from "@/components/ui";
+import { useEmployeeDemo } from "@/lib/demo/employeeDemoStore";
 import {
   fetchCatalogData,
   fetchUserProfileBundle,
@@ -25,6 +35,8 @@ interface ProfileEditorProps {
 }
 
 export function ProfileEditor({ userId }: ProfileEditorProps) {
+  const { state: demoState, updateNotificationPrefs, resetDemoState } =
+    useEmployeeDemo();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +140,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
       });
 
       setProfile(updated);
-      setSavedNotice("Profile and learning preferences saved to Supabase.");
+      setSavedNotice("Profile and INR learning preferences saved to Supabase.");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to save profile changes."
@@ -140,108 +152,94 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-8 text-sm text-slate-600 shadow-sm">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Loading profile...
+      <div className="space-y-6">
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
     );
   }
 
   if (loadFailed) {
     return (
-      <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800">
-        <p className="font-semibold">Unable to load profile</p>
-        <p className="mt-1">{error}</p>
-        <button
-          type="button"
-          onClick={handleRetry}
-          className="mt-4 rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-800 hover:bg-rose-100"
-        >
-          Retry
-        </button>
-      </div>
+      <Card padding="lg" className="border-[var(--status-attention-border)]">
+        <p className="font-editorial text-2xl text-ink">
+          Unable to load profile
+        </p>
+        <p className="mt-1 text-sm text-muted">{error}</p>
+        <div className="mt-5">
+          <Button
+            variant="primary"
+            size="sm"
+            leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
+            onClick={handleRetry}
+          >
+            Retry
+          </Button>
+        </div>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <form
-        onSubmit={handleSave}
-        className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
-      >
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Your Profile</h1>
-            <p className="text-xs text-slate-500">
-              Account Role: <strong>{profile?.account_type ?? "learner"}</strong>{" "}
-              (managed server-side; cannot be changed by user)
-            </p>
-          </div>
-          <StatusBadge
-            tone={profile?.onboarding_completed ? "healthy" : "warning"}
+    <div className="space-y-8">
+      <EditorialHeading
+        eyebrow="Account &amp; Preferences"
+        title="Profile &"
+        italicAccent="Settings"
+        subtitle={`Account Role: ${profile?.account_type ?? "learner"} (server-enforced; cannot be escalated from client).`}
+        actions={
+          <StatusLabel
+            tone={profile?.onboarding_completed ? "verified" : "in_progress"}
             label={
               profile?.onboarding_completed
                 ? "Onboarding Complete"
                 : "Onboarding Incomplete"
             }
           />
-        </div>
+        }
+      />
 
-        {error ? (
-          <p className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
-            {error}
-          </p>
-        ) : null}
+      <Card padding="lg">
+        <form onSubmit={handleSave} className="space-y-5">
+          {error ? (
+            <p
+              role="alert"
+              className="rounded-xl border border-[var(--status-attention-border)] bg-[var(--status-attention-bg)] px-4 py-3 text-xs font-medium text-[var(--status-attention-text)]"
+            >
+              {error}
+            </p>
+          ) : null}
 
-        {savedNotice ? (
-          <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
-            {savedNotice}
-          </p>
-        ) : null}
+          {savedNotice ? (
+            <p
+              role="status"
+              className="rounded-xl border border-[var(--status-verified-border)] bg-[var(--status-verified-bg)] px-4 py-3 text-xs font-medium text-[var(--status-verified-text)]"
+            >
+              {savedNotice}
+            </p>
+          ) : null}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-slate-700">
-              Full Name
-            </label>
-            <input
-              type="text"
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Input
+              label="Full Name"
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700">
-              Current Role
-            </label>
-            <input
-              type="text"
+            <Input
+              label="Current Job Role"
               value={currentRole}
               onChange={(e) => setCurrentRole(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700">
-              Industry
-            </label>
-            <input
-              type="text"
+            <Input
+              label="Industry"
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700">
-              Target Career Role
-            </label>
-            <select
+            <Select
+              label="Target Career Role"
               value={targetRoleId}
               onChange={(e) => setTargetRoleId(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             >
               <option value="">None selected</option>
               {careerRoles.map((role) => (
@@ -249,109 +247,187 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
                   {role.title}
                 </option>
               ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700">
-              Daily Learning Time (mins)
-            </label>
-            <input
+            </Select>
+            <Input
+              label="Daily Learning Time (mins)"
               type="number"
               min={10}
               max={480}
               value={dailyMinutes}
               onChange={(e) => setDailyMinutes(Number(e.target.value))}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700">
-              Learning Budget (INR)
-            </label>
-            <input
+            <Input
+              label="Learning Budget (INR)"
               type="number"
               min={0}
               step={500}
               value={budgetInr}
               onChange={(e) => setBudgetInr(Number(e.target.value))}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
           </div>
-        </div>
 
-        <label className="mt-4 flex items-center gap-2 text-xs text-slate-700">
-          <input
-            type="checkbox"
-            checked={consentShare}
-            onChange={(e) => setConsentShare(e.target.checked)}
-          />
-          Consent to share learning progress and skills with my assigned team
-          manager
-        </label>
+          <label className="flex items-center gap-2.5 rounded-xl border border-line bg-canvas p-3.5 text-xs text-ink cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consentShare}
+              onChange={(e) => setConsentShare(e.target.checked)}
+              className="accent-[#294C3B]"
+            />
+            Consent to share learning progress and skills with my assigned team
+            manager
+          </label>
 
-        <div className="mt-5">
-          <button
-            type="submit"
-            disabled={saving}
-            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
-          >
-            {saving ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            Save Changes
-          </button>
-        </div>
-      </form>
+          <div className="pt-1">
+            <Button
+              type="submit"
+              variant="primary"
+              loading={saving}
+              leftIcon={<Save className="h-4 w-4" />}
+            >
+              Save Changes
+            </Button>
+          </div>
+        </form>
+      </Card>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-base font-semibold text-slate-900">
+      <Card padding="lg">
+        <h2 className="font-editorial text-2xl text-ink">
           Recorded Skills ({userSkills.length})
         </h2>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-muted">
           Self-reported and inferred skills remain distinct from verified
           proficiency.
         </p>
 
         {userSkills.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">
+          <p className="mt-4 text-sm text-muted">
             No skills recorded yet. Use Onboarding to add your current skills.
           </p>
         ) : (
-          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+          <div className="mt-4 flex flex-wrap gap-2.5">
             {userSkills.map((item) => (
-              <li
+              <SkillChip
                 key={item.id}
-                className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs"
-              >
-                <div>
-                  <p className="font-semibold text-slate-900">
-                    {item.skills?.name || item.skill_id}
-                  </p>
-                  <p className="text-slate-500">
-                    Proficiency: {item.proficiency}/5
-                  </p>
-                </div>
-                <StatusBadge
-                  tone={
-                    item.verification_status === "verified"
-                      ? "healthy"
-                      : "warning"
-                  }
-                  label={item.verification_status}
-                />
-              </li>
+                name={item.skills?.name || item.skill_id}
+                level={item.proficiency}
+                status={item.verification_status}
+              />
             ))}
-          </ul>
+          </div>
         )}
-      </section>
+      </Card>
 
       <ResumeManagerCard
         userId={userId}
         resumes={resumes}
         onResumesChanged={setResumes}
       />
+
+      {/* Local Notification & Privacy Controls (isolated demo settings, no unsupported DB writes) */}
+      <Card padding="lg" className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+              [DEMO] Local Journal Preferences
+            </p>
+            <h2 className="flex items-center gap-2 font-editorial text-2xl text-ink">
+              <Bell className="h-5 w-5 text-forest" />
+              Notifications &amp; Privacy Controls
+            </h2>
+          </div>
+          <StatusLabel tone="neutral" label="Stored Locally in Browser" />
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex items-start gap-2.5 rounded-xl border border-line bg-canvas p-3.5 text-xs text-ink cursor-pointer">
+            <input
+              type="checkbox"
+              checked={demoState.notificationPrefs.dailyDigest}
+              onChange={(e) =>
+                updateNotificationPrefs({ dailyDigest: e.target.checked })
+              }
+              className="mt-0.5 accent-[#294C3B]"
+            />
+            <span>
+              <strong className="block">Daily Journal Digest</strong>
+              Gentle summary of open roadmap sprints and new catalog matches.
+            </span>
+          </label>
+
+          <label className="flex items-start gap-2.5 rounded-xl border border-line bg-canvas p-3.5 text-xs text-ink cursor-pointer">
+            <input
+              type="checkbox"
+              checked={demoState.notificationPrefs.streakNudge}
+              onChange={(e) =>
+                updateNotificationPrefs({ streakNudge: e.target.checked })
+              }
+              className="mt-0.5 accent-[#294C3B]"
+            />
+            <span>
+              <strong className="block">Weekly Momentum Check-in</strong>
+              Reminder when weekly learning pace falls below your simulated cap.
+            </span>
+          </label>
+
+          <label className="flex items-start gap-2.5 rounded-xl border border-line bg-canvas p-3.5 text-xs text-ink cursor-pointer">
+            <input
+              type="checkbox"
+              checked={demoState.notificationPrefs.sponsorshipAlerts}
+              onChange={(e) =>
+                updateNotificationPrefs({
+                  sponsorshipAlerts: e.target.checked,
+                })
+              }
+              className="mt-0.5 accent-[#294C3B]"
+            />
+            <span>
+              <strong className="block">Sponsorship Status Alerts</strong>
+              Notify when manager reviews your INR training sponsorship request.
+            </span>
+          </label>
+
+          <div className="rounded-xl border border-line bg-canvas p-3.5 text-xs space-y-2">
+            <span className="flex items-center gap-1.5 font-bold text-ink">
+              <ShieldCheck className="h-3.5 w-3.5 text-forest" />
+              Skill Passport Visibility (Demo Preview)
+            </span>
+            <select
+              value={demoState.notificationPrefs.publicPassportMode}
+              onChange={(e) =>
+                updateNotificationPrefs({
+                  publicPassportMode: e.target.value as
+                    | "verified_only"
+                    | "verified_and_demonstrated",
+                })
+              }
+              className="w-full rounded-lg border border-line bg-surface px-2.5 py-1.5 text-xs text-ink"
+            >
+              <option value="verified_and_demonstrated">
+                Show Verified + Demonstrated Evidence
+              </option>
+              <option value="verified_only">
+                Show Verified Credentials Only
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+          <p className="text-xs text-muted">
+            Your Supabase manager sharing consent above controls real team
+            visibility. You can reset demo quests, XP, and preview state anytime.
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
+            onClick={resetDemoState}
+          >
+            Reset Demo Sandbox
+          </Button>
+        </div>
+      </Card>
     </div>
   );
 }

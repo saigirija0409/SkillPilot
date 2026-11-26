@@ -59,15 +59,19 @@ export async function GET(request: NextRequest) {
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("onboarding_completed")
+        .select("onboarding_completed, account_type")
         .eq("id", user.id)
-        .maybeSingle<{ onboarding_completed: boolean }>();
+        .maybeSingle<{ onboarding_completed: boolean; account_type: string }>();
 
       if (profile && !profile.onboarding_completed) {
         return NextResponse.redirect(`${origin}/onboarding`);
       }
       if (profile?.onboarding_completed && !requestedNext) {
-        return NextResponse.redirect(`${origin}/dashboard`);
+        const homePath =
+          profile.account_type === "manager" || profile.account_type === "admin"
+            ? "/manager/overview"
+            : "/employee/overview";
+        return NextResponse.redirect(`${origin}${homePath}`);
       }
     }
   } catch {

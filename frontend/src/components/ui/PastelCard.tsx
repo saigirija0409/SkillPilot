@@ -76,7 +76,7 @@ export function PastelCard({
           {eyebrow ? (
             <span
               className={cn(
-                "inline-block rounded-full border px-3 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em]",
+                "inline-block rounded-full border px-3 py-0.5 text-xs font-semibold uppercase tracking-[0.1em]",
                 styles.eyebrow
               )}
             >
@@ -86,7 +86,7 @@ export function PastelCard({
           <h3 className={cn("font-editorial text-2xl leading-snug sm:text-[28px]", styles.text)}>
             {title}
           </h3>
-          <p className={cn("text-sm leading-relaxed", styles.muted)}>
+          <p className={cn("text-[14px] sm:text-[15px] font-medium leading-relaxed", styles.muted)}>
             {description}
           </p>
         </div>

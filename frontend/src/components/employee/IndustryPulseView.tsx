@@ -127,7 +127,7 @@ export function IndustryPulseView() {
             </div>
 
             <div className="space-y-3 lg:col-span-4">
-              <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-muted">
                 <TrendingUp className="h-3.5 w-3.5 text-forest" />
                 Skill Demand Signals
               </p>
@@ -188,14 +188,14 @@ export function IndustryPulseView() {
                     </span>
                   </div>
 
-                  <h3 className="font-editorial text-2xl leading-snug text-ink">
+                  <h3 className="font-editorial text-[24px] sm:text-[26px] leading-snug text-ink">
                     {article.title}
                   </h3>
-                  <p className="text-xs leading-relaxed text-muted">
+                  <p className="text-[14px] sm:text-[15px] leading-relaxed text-muted">
                     {article.summary}
                   </p>
 
-                  <div className="rounded-xl border border-line bg-canvas p-3 text-xs text-ink">
+                  <div className="rounded-xl border border-line bg-canvas p-3.5 text-[13px] sm:text-sm text-ink">
                     <strong>Why it matters:</strong> {article.whyItMatters}
                   </div>
 

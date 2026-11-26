@@ -26,15 +26,15 @@ export function EditorialHeading({
         className
       )}
     >
-      <div className="max-w-2xl space-y-3">
+      <div className="max-w-3xl space-y-3">
         {eyebrow ? (
-          <p className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-forest">
+          <p className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1 text-xs sm:text-[13px] font-semibold uppercase tracking-[0.12em] text-forest">
             <span className="h-1.5 w-1.5 rounded-full bg-forest" aria-hidden="true" />
             {eyebrow}
           </p>
         ) : null}
 
-        <h1 className="font-editorial text-4xl leading-[1.08] tracking-tight text-ink sm:text-5xl">
+        <h1 className="font-editorial text-[34px] leading-[1.08] tracking-tight text-ink sm:text-[42px] lg:text-[46px]">
           {title}{" "}
           {italicAccent ? (
             <span className="italic text-forest">{italicAccent}</span>
@@ -42,7 +42,7 @@ export function EditorialHeading({
         </h1>
 
         {subtitle ? (
-          <p className="text-base leading-relaxed text-muted sm:text-[17px]">
+          <p className="text-[15px] leading-relaxed text-muted sm:text-base">
             {subtitle}
           </p>
         ) : null}

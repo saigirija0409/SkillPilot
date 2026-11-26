@@ -764,7 +764,7 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
               </div>
 
               <div className="space-y-2">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted">
                   Prerequisites &amp; Unlocks
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -798,7 +798,7 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
               </div>
 
               <div className="space-y-2.5 border-t border-line pt-4">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted">
                   ML Ranked Opportunities
                 </p>
                 {matchedRecommendations.length === 0 ? (
@@ -811,39 +811,39 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
                   matchedRecommendations.map((rec) => (
                     <div
                       key={rec.opportunity_id}
-                      className="rounded-xl border border-line bg-canvas p-3 space-y-1.5 text-xs"
+                      className="rounded-xl border border-line bg-canvas p-3.5 space-y-2 text-[13px]"
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="font-bold text-ink line-clamp-2">
-                          {cleanDisplayText(rec.title)}
-                        </p>
+                      <div className="flex items-center justify-between gap-2">
                         <StatusLabel
                           tone="verified"
                           label={`${Math.round(rec.relevance_score * 100)}% Match`}
                           className="shrink-0"
                         />
-                      </div>
-                      <p className="text-muted">
-                        {cleanDisplayText(rec.match_reason)} •{" "}
-                        {formatEnumLabel(rec.format)}
-                      </p>
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-[11px] font-semibold text-forest">
+                        <span className="text-xs font-semibold text-forest">
                           {rec.cost_inr === 0
                             ? "Free"
                             : `₹${rec.cost_inr.toLocaleString("en-IN")} INR`}
                         </span>
-                        {rec.url ? (
+                      </div>
+                      <p className="text-[15px] font-bold leading-snug text-ink">
+                        {cleanDisplayText(rec.title)}
+                      </p>
+                      <p className="text-muted leading-relaxed">
+                        {cleanDisplayText(rec.match_reason)} •{" "}
+                        {formatEnumLabel(rec.format)}
+                      </p>
+                      {rec.url ? (
+                        <div className="pt-0.5">
                           <a
                             href={rec.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 font-semibold text-forest underline"
+                            className="inline-flex items-center gap-1 font-semibold text-forest underline underline-offset-2"
                           >
-                            Source <ExternalLink className="h-3 w-3" />
+                            Source <ExternalLink className="h-3.5 w-3.5" />
                           </a>
-                        ) : null}
-                      </div>
+                        </div>
+                      ) : null}
                     </div>
                   ))
                 )}

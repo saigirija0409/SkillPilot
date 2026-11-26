@@ -415,25 +415,25 @@ export function ExploreOpportunitiesView() {
                     ) : null}
                   </div>
 
-                  <h2 className="font-editorial text-2xl leading-snug text-ink line-clamp-2">
+                  <h2 className="font-editorial text-[24px] sm:text-[26px] leading-snug text-ink">
                     {cleanDisplayText(opp.title)}
                   </h2>
-                  <p className="text-xs font-semibold text-forest">
+                  <p className="text-[13px] sm:text-sm font-semibold text-forest">
                     {cleanDisplayText(opp.provider)} •{" "}
                     {formatEnumLabel(opp.format)}
                   </p>
-                  <p className="text-sm leading-relaxed text-muted line-clamp-3">
+                  <p className="text-[14px] sm:text-[15px] leading-relaxed text-muted">
                     {cleanDisplayText(opp.description)}
                   </p>
 
                   {mlMatch ? (
-                    <p className="rounded-xl border border-line bg-canvas px-3 py-2 text-xs text-ink">
+                    <p className="rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-[13px] text-ink">
                       <strong>Relevance:</strong>{" "}
                       {cleanDisplayText(mlMatch.match_reason)}
                     </p>
                   ) : null}
 
-                  <div className="flex flex-wrap gap-1.5 pt-1">
+                  <div className="flex flex-wrap gap-2 pt-1">
                     {opp.skill_tags.map((tag) => (
                       <SkillChip key={tag} name={tag} status="self_reported" />
                     ))}
@@ -441,7 +441,7 @@ export function ExploreOpportunitiesView() {
                 </div>
 
                 <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
-                  <div className="flex items-center gap-3 text-xs font-semibold text-muted">
+                  <div className="flex items-center gap-3 text-[13px] sm:text-sm font-semibold text-muted">
                     <span className="inline-flex items-center gap-1">
                       <Clock className="h-3.5 w-3.5" />
                       {opp.estimated_hours} hrs

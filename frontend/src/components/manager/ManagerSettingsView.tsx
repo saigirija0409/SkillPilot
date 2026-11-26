@@ -151,7 +151,7 @@ export function ManagerSettingsView({ userId }: ManagerSettingsViewProps) {
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
             />
-            <div className="rounded-xl border border-line bg-canvas p-3 text-xs text-muted">
+            <div className="rounded-xl border border-line bg-canvas p-3.5 text-[13px] sm:text-sm text-muted">
               <strong>Authorization Integrity:</strong>{" "}
               <code className="font-mono">account_type</code> and{" "}
               <code className="font-mono">organization_id</code> (
@@ -192,8 +192,8 @@ export function ManagerSettingsView({ userId }: ManagerSettingsViewProps) {
               }
             />
 
-            <div className="space-y-2.5 pt-1 text-xs">
-              <label className="flex items-start gap-2.5 rounded-xl border border-line bg-canvas p-3 text-ink cursor-pointer">
+            <div className="space-y-3 pt-1 text-[14px]">
+              <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-3.5 text-ink cursor-pointer">
                 <input
                   type="checkbox"
                   checked={
@@ -216,7 +216,7 @@ export function ManagerSettingsView({ userId }: ManagerSettingsViewProps) {
                 </span>
               </label>
 
-              <label className="flex items-start gap-2.5 rounded-xl border border-line bg-canvas p-3 text-ink cursor-pointer">
+              <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-3.5 text-ink cursor-pointer">
                 <input
                   type="checkbox"
                   checked={

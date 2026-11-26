@@ -97,12 +97,12 @@ export function ManagerBudgetView() {
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Controls */}
         <Card padding="lg" className="lg:col-span-6 space-y-6">
-          <h2 className="font-editorial text-2xl text-ink">
+          <h2 className="font-editorial text-[26px] sm:text-[28px] text-ink">
             Budget &amp; Capacity Levers (INR)
           </h2>
 
           <div className="space-y-2">
-            <div className="flex justify-between text-xs font-bold text-ink">
+            <div className="flex justify-between text-sm font-bold text-ink">
               <span>Total Quarterly Training Budget (INR)</span>
               <span className="text-forest">
                 ₹{managerState.totalTrainingBudgetInr.toLocaleString("en-IN")}{" "}
@@ -118,7 +118,7 @@ export function ManagerBudgetView() {
               onChange={(e) => setTrainingBudgetInr(Number(e.target.value))}
               className="w-full accent-[#294C3B] cursor-pointer"
             />
-            <p className="text-[11px] text-muted">
+            <p className="text-[13px] text-muted">
               Already committed to Approved Sponsorships: ₹
               {approvedSponsorshipSpentInr.toLocaleString("en-IN")} INR →{" "}
               <strong className="text-ink">
@@ -130,7 +130,7 @@ export function ManagerBudgetView() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <div className="flex justify-between text-xs font-bold text-ink">
+              <div className="flex justify-between text-sm font-bold text-ink">
                 <span>Seats per Activity</span>
                 <span className="text-forest">{seatsPerCohort} learners</span>
               </div>
@@ -146,7 +146,7 @@ export function ManagerBudgetView() {
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex justify-between text-xs font-bold text-ink">
+              <div className="flex justify-between text-sm font-bold text-ink">
                 <span>Team Hours / Week</span>
                 <span className="text-forest">{weeklyDeptHours} hrs</span>
               </div>
@@ -184,7 +184,7 @@ export function ManagerBudgetView() {
           </div>
 
           <div className="space-y-3 border-t border-line pt-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted">
+            <p className="text-[13px] font-bold uppercase tracking-wider text-muted">
               Department Budget Allocation Split
             </p>
             {DEPARTMENTS.map((dept) => {
@@ -193,7 +193,7 @@ export function ManagerBudgetView() {
                 (remainingTrainingBudgetInr * pct) / 100
               );
               return (
-                <div key={dept} className="space-y-1 text-xs">
+                <div key={dept} className="space-y-1 text-sm">
                   <div className="flex justify-between font-semibold">
                     <span className="text-ink">{dept}</span>
                     <span className="text-forest">

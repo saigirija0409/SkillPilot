@@ -260,15 +260,15 @@ export function LandingPage() {
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div className="rounded-xl bg-pistachio/50 p-3">
                     <p className="font-editorial text-2xl text-ink">30d</p>
-                    <p className="text-[11px] font-semibold text-muted">Foundations</p>
+                    <p className="text-xs font-semibold text-muted">Foundations</p>
                   </div>
                   <div className="rounded-xl bg-butter/55 p-3">
                     <p className="font-editorial text-2xl text-ink">60d</p>
-                    <p className="text-[11px] font-semibold text-muted">Applied Build</p>
+                    <p className="text-xs font-semibold text-muted">Applied Build</p>
                   </div>
                   <div className="rounded-xl bg-lavender/60 p-3">
                     <p className="font-editorial text-2xl text-ink">90d</p>
-                    <p className="text-[11px] font-semibold text-muted">Verification</p>
+                    <p className="text-xs font-semibold text-muted">Verification</p>
                   </div>
                 </div>
               </motion.div>
@@ -344,7 +344,7 @@ export function LandingPage() {
                         {role.title}
                       </p>
                       <p
-                        className={`mt-1 text-xs ${
+                        className={`mt-1 text-[13px] font-medium ${
                           active ? "text-pistachio" : "text-muted"
                         }`}
                       >
@@ -397,7 +397,7 @@ export function LandingPage() {
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-forest">
                     Sample 30 / 60 / 90 Focus
                   </p>
-                  <ul className="space-y-2 text-sm text-ink">
+                  <ul className="space-y-2.5 text-[15px] text-ink">
                     {activeRole.samplePlan.map((line) => (
                       <li key={line} className="flex items-start gap-2.5">
                         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-forest" />
@@ -501,7 +501,7 @@ export function LandingPage() {
               Chart your next chapter with{" "}
               <span className="italic text-butter">clarity and momentum.</span>
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-pistachio/90 sm:text-base">
+            <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-pistachio/95 sm:text-base">
               Create your learner account in under a minute, resume onboarding
               across devices, and keep your career records strictly under your
               control.

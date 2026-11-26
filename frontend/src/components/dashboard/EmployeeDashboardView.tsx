@@ -369,10 +369,10 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
           {/* Interactive Career Journey SVG Preview */}
           <div className="rounded-2xl border border-line bg-canvas p-5 lg:col-span-5">
             <div className="flex items-center justify-between gap-2 pb-2">
-              <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+              <span className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
                 Interactive Journey Preview
               </span>
-              <span className="text-[11px] font-semibold text-forest">
+              <span className="text-xs font-semibold text-forest">
                 Click a milestone
               </span>
             </div>
@@ -457,12 +457,12 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
               })}
             </svg>
 
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3.5">
               <div className="space-y-0.5">
-                <p className="text-xs font-bold text-ink">
+                <p className="text-sm font-bold text-ink">
                   {activeMilestone.step} • {activeMilestone.label}
                 </p>
-                <p className="text-xs text-muted">{activeMilestone.summary}</p>
+                <p className="text-[13px] text-muted">{activeMilestone.summary}</p>
               </div>
               <Link href={activeMilestone.href}>
                 <Button size="sm" variant="secondary">
@@ -479,10 +479,10 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
         <Card padding="lg" className="lg:col-span-7 space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
                 Prototype mode · Sample data
               </p>
-              <h2 className="font-editorial text-3xl text-ink">
+              <h2 className="font-editorial text-[28px] sm:text-[32px] leading-tight text-ink">
                 Today&apos;s Learning Quests
               </h2>
             </div>
@@ -492,11 +492,11 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
             />
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {demoState.quests.map((quest) => (
               <div
                 key={quest.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-canvas px-4 py-3 transition hover:border-line-strong"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-canvas px-4 py-3.5 transition hover:border-line-strong"
               >
                 <button
                   type="button"
@@ -520,9 +520,9 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
                   ) : (
                     <Circle className="mt-0.5 h-5 w-5 text-muted shrink-0" />
                   )}
-                  <div>
+                  <div className="space-y-0.5">
                     <p
-                      className={`text-sm font-semibold ${
+                      className={`text-[15px] font-semibold ${
                         quest.completed
                           ? "line-through text-muted"
                           : "text-ink"
@@ -530,12 +530,12 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
                     >
                       {quest.title}
                     </p>
-                    <p className="text-xs text-muted">{quest.subtitle}</p>
+                    <p className="text-[13px] sm:text-sm text-muted">{quest.subtitle}</p>
                   </div>
                 </button>
 
                 <div className="flex items-center gap-2.5">
-                  <span className="rounded-full border border-line bg-surface px-2.5 py-0.5 text-[11px] font-bold text-forest">
+                  <span className="rounded-full border border-line bg-surface px-3 py-1 text-xs font-bold text-forest">
                     +{quest.xp} XP
                   </span>
                   <Link href={quest.href}>
@@ -594,10 +594,10 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
         <Card padding="lg" className="lg:col-span-6 space-y-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
                 Live Skill Readiness
               </p>
-              <h2 className="font-editorial text-3xl text-ink">
+              <h2 className="font-editorial text-[28px] sm:text-[32px] leading-tight text-ink">
                 Your Skill Constellation
               </h2>
             </div>
@@ -613,23 +613,23 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
           </div>
 
           <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="rounded-2xl border border-[#C5D89B] bg-[#D9E8B5]/65 p-3">
-              <p className="font-editorial text-3xl text-ink">{strongCount}</p>
-              <p className="text-[11px] font-semibold text-ink">
+            <div className="rounded-2xl border border-[#C5D89B] bg-[#D9E8B5]/65 p-4">
+              <p className="font-editorial text-4xl text-ink">{strongCount}</p>
+              <p className="mt-1 text-xs sm:text-[13px] font-semibold text-ink">
                 Target Met
               </p>
             </div>
-            <div className="rounded-2xl border border-[#EBCD75] bg-[#F9DF91]/65 p-3">
-              <p className="font-editorial text-3xl text-ink">{gapCount}</p>
-              <p className="text-[11px] font-semibold text-ink">
+            <div className="rounded-2xl border border-[#EBCD75] bg-[#F9DF91]/65 p-4">
+              <p className="font-editorial text-4xl text-ink">{gapCount}</p>
+              <p className="mt-1 text-xs sm:text-[13px] font-semibold text-ink">
                 Skill Gaps
               </p>
             </div>
-            <div className="rounded-2xl border border-[#C7BDE4] bg-[#DDD6F3]/65 p-3">
-              <p className="font-editorial text-3xl text-ink">
+            <div className="rounded-2xl border border-[#C7BDE4] bg-[#DDD6F3]/65 p-4">
+              <p className="font-editorial text-4xl text-ink">
                 {demonstratedDemoCount}
               </p>
-              <p className="text-[11px] font-semibold text-ink">
+              <p className="mt-1 text-xs sm:text-[13px] font-semibold text-ink">
                 Demonstrated
               </p>
             </div>
@@ -637,7 +637,7 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
 
           <div className="flex flex-wrap gap-2">
             {userSkills.length === 0 ? (
-              <p className="text-xs text-muted">
+              <p className="text-[14px] text-muted">
                 Upload a resume in Settings or add skills in Onboarding to
                 populate your ledger.
               </p>
@@ -657,10 +657,10 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
         <Card padding="lg" className="lg:col-span-6 space-y-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
                 Active Learning Plans
               </p>
-              <h2 className="font-editorial text-3xl text-ink">
+              <h2 className="font-editorial text-[28px] sm:text-[32px] leading-tight text-ink">
                 AI Career Roadmaps
               </h2>
             </div>
@@ -676,7 +676,7 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
           </div>
 
           {savedRoadmaps.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-line-strong bg-canvas p-4 text-xs text-muted space-y-2">
+            <div className="rounded-2xl border border-dashed border-line-strong bg-canvas p-5 text-[14px] text-muted space-y-3">
               <p>
                 No persisted Gemini roadmap yet for your account. Generate one in
                 one click on My Roadmap.
@@ -688,7 +688,7 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
               </Link>
             </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               <ProgressBar
                 value={100}
                 label={`${savedRoadmaps.length} active learning plan(s)`}
@@ -698,13 +698,13 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
                 <Link
                   key={rm.id}
                   href="/employee/roadmap"
-                  className="flex items-center justify-between gap-3 rounded-xl border border-line bg-canvas px-4 py-3 transition hover:border-line-strong"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-line bg-canvas px-4 py-3.5 transition hover:border-line-strong"
                 >
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-semibold text-ink">
+                  <div className="space-y-1">
+                    <p className="text-[15px] font-semibold text-ink">
                       {cleanDisplayText(rm.title)}
                     </p>
-                    <p className="text-xs text-muted">
+                    <p className="text-[13px] text-muted">
                       {rm.duration_days} days •{" "}
                       {rm.career_roles?.title || "Career Plan"}
                     </p>
@@ -721,11 +721,11 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
       <section className="space-y-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
                 Semantic Skill Matching • Budget Cap ₹{budgetCap.toLocaleString("en-IN")}{" "}
                 INR
               </p>
-            <h2 className="font-editorial text-3xl text-ink">
+            <h2 className="font-editorial text-[28px] sm:text-[32px] leading-tight text-ink">
               Personalized{" "}
               <span className="italic text-forest">Recommendations</span>
             </h2>
@@ -771,26 +771,26 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             {mlRecs.map((rec) => (
               <Card key={rec.opportunity_id} interactive padding="md" className="flex h-full flex-col justify-between">
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Sparkles className="h-4 w-4 text-forest shrink-0" />
-                      <p className="text-sm font-bold text-ink line-clamp-2">
-                        {cleanDisplayText(rec.title)}
-                      </p>
-                    </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-pistachio/60 text-forest">
+                      <Sparkles className="h-4 w-4" />
+                    </span>
                     <StatusLabel
                       tone="verified"
                       label={`${Math.round(rec.relevance_score * 100)}% Match`}
                       className="shrink-0"
                     />
                   </div>
-                  <p className="mt-2 text-xs leading-relaxed text-muted line-clamp-3">
+                  <h3 className="text-[17px] sm:text-[18px] font-bold leading-snug text-ink">
+                    {cleanDisplayText(rec.title)}
+                  </h3>
+                  <p className="text-[14px] leading-relaxed text-muted line-clamp-3">
                     {cleanDisplayText(rec.match_reason)} —{" "}
                     {cleanDisplayText(rec.description)}
                   </p>
                 </div>
-                <div className="mt-4 flex items-center justify-between border-t border-line pt-3 text-[11px] font-semibold text-muted">
+                <div className="mt-5 flex items-center justify-between border-t border-line pt-3.5 text-[13px] font-semibold text-muted">
                   <span>
                     {rec.estimated_hours} hrs •{" "}
                     {rec.cost_inr === 0
@@ -802,9 +802,9 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
                       href={rec.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-forest underline"
+                      className="inline-flex items-center gap-1 text-forest underline underline-offset-2"
                     >
-                      Open Link <ExternalLink className="h-3 w-3" />
+                      Open Link <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   ) : null}
                 </div>
@@ -815,7 +815,7 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
       </section>
 
       <Card padding="md" className="bg-canvas">
-        <div className="flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-4 text-[13px]">
           <div className="flex flex-wrap items-center gap-3">
             <ShieldCheck className="h-4 w-4 text-forest" />
             <span className="font-semibold text-ink">

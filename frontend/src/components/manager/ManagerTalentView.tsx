@@ -96,11 +96,11 @@ export function ManagerTalentView() {
       <Card padding="lg" className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
               Active Initiative: {cleanDisplayText(managerState.projectName)} (
               {managerState.projectTimeline})
             </p>
-            <h2 className="font-editorial text-2xl text-ink">
+            <h2 className="font-editorial text-[26px] sm:text-[28px] text-ink">
               Switch Preset or Tune Thresholds Live
             </h2>
           </div>
@@ -172,12 +172,12 @@ export function ManagerTalentView() {
             </h2>
           </div>
 
-          <table className="w-full min-w-[540px] text-left text-xs border-collapse">
+          <table className="w-full min-w-[560px] text-left text-[14px] border-collapse">
             <thead>
               <tr className="border-b border-line">
-                <th className="py-2 pr-4 font-bold text-muted">Requirement</th>
+                <th className="py-2.5 pr-4 text-[13px] font-bold uppercase tracking-wider text-muted">Requirement</th>
                 {comparedProfiles.map(({ emp, overallPct }) => (
-                  <th key={emp.id} className="py-2 px-3 font-bold text-ink">
+                  <th key={emp.id} className="py-2.5 px-3 text-[13px] font-bold text-ink">
                     {emp.name} ({overallPct}%)
                   </th>
                 ))}
@@ -186,16 +186,16 @@ export function ManagerTalentView() {
             <tbody>
                   {managerState.projectRequirements.map((req) => (
                     <tr key={req.id} className="border-b border-line/60">
-                      <td className="py-2.5 pr-4 font-semibold text-ink">
+                      <td className="py-3 pr-4 font-semibold text-ink">
                         {req.skill} (Target {req.requiredLevel}/5)
                       </td>
                       {comparedProfiles.map(({ emp }) => {
                         const curr = emp.skills[req.skill] ?? 0;
                         const ev = emp.evidenceStatus[req.skill] ?? "self_reported";
                         return (
-                          <td key={`${emp.id}-${req.id}`} className="py-2.5 px-3">
+                          <td key={`${emp.id}-${req.id}`} className="py-3 px-3">
                             <span className="font-bold text-ink">{curr}/5</span>{" "}
-                            <span className="text-[11px] text-muted">
+                            <span className="text-xs text-muted">
                               ({formatEnumLabel(ev)})
                             </span>
                           </td>

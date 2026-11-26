@@ -542,7 +542,7 @@ export function OnboardingWizard({ userId, userEmail }: OnboardingWizardProps) {
                               value={skillSearch}
                               onChange={(e) => setSkillSearch(e.target.value)}
                               placeholder="Filter skills..."
-                              className="w-full rounded-xl border border-line-strong bg-surface py-1.5 pl-8 pr-3 text-xs text-ink focus:border-forest focus:outline-none"
+                              className="w-full rounded-xl border border-line-strong bg-surface py-2 pl-8 pr-3 text-sm text-ink focus:border-forest focus:outline-none"
                             />
                           </div>
                         </div>
@@ -575,7 +575,7 @@ export function OnboardingWizard({ userId, userEmail }: OnboardingWizardProps) {
                                         Number(e.target.value)
                                       )
                                     }
-                                    className="rounded-md border border-line bg-canvas px-1.5 py-0.5 text-[11px] font-semibold text-ink"
+                                    className="rounded-md border border-line bg-canvas px-2 py-0.5 text-xs font-semibold text-ink"
                                   >
                                     {[1, 2, 3, 4, 5].map((n) => (
                                       <option key={n} value={n}>

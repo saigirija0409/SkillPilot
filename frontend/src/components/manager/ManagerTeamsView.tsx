@@ -165,7 +165,7 @@ export function ManagerTeamsView() {
       ) : null}
 
       {!hasLiveOrgTeam && !analyticsError ? (
-        <Card padding="md" className="bg-canvas text-xs text-muted">
+        <Card padding="md" className="bg-canvas text-[14px] text-muted">
           Prototype mode · Sample data — assign employees to an organization team to view live workforce records here.
         </Card>
       ) : null}
@@ -281,7 +281,7 @@ export function ManagerTeamsView() {
                           <h2 className="font-editorial text-2xl leading-tight text-ink">
                             {member.full_name || member.email}
                           </h2>
-                          <p className="text-xs text-muted">
+                          <p className="text-[13px] sm:text-sm text-muted">
                             {member.target_role_title || "No Target Role"}
                           </p>
                         </div>
@@ -374,7 +374,7 @@ export function ManagerTeamsView() {
                         <h2 className="font-editorial text-2xl leading-tight text-ink">
                           {emp.name}
                         </h2>
-                        <p className="text-xs text-muted">{emp.role}</p>
+                        <p className="text-[13px] sm:text-sm text-muted">{emp.role}</p>
                       </div>
                     </div>
                     <StatusLabel tone="inferred" label={emp.department} />

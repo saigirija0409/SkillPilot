@@ -163,8 +163,8 @@ export function ManagerCopilotView() {
             illustration={<Bot className="h-9 w-9 text-forest" />}
           />
 
-          <Card padding="md" className="space-y-2">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+          <Card padding="md" className="space-y-2.5">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
               Strategy Prompts
             </p>
             {MANAGER_SUGGESTED_PROMPTS.map((q) => (
@@ -172,7 +172,7 @@ export function ManagerCopilotView() {
                 key={q}
                 type="button"
                 onClick={() => sendPrompt(q)}
-                className="block w-full rounded-xl border border-line bg-canvas px-3 py-2 text-left text-xs font-semibold text-ink transition hover:border-forest cursor-pointer"
+                className="block w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-left text-[13px] font-semibold text-ink transition hover:border-forest cursor-pointer"
               >
                 {q}
               </button>
@@ -186,7 +186,7 @@ export function ManagerCopilotView() {
             {managerState.copilotMessages.map((msg) => (
               <div
                 key={msg.id}
-                className={`rounded-2xl border p-4 text-sm ${msg.role === "user"
+                className={`rounded-2xl border p-4 text-[15px] ${msg.role === "user"
                   ? "ml-auto max-w-md border-ink bg-ink text-[#FFFDF8]"
                   : "border-line bg-canvas text-ink"
                   }`}
@@ -208,9 +208,9 @@ export function ManagerCopilotView() {
                   </div>
                 ) : null}
                 {msg.role === "assistant" ? (
-                  <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-mono text-muted">
-                    <Sparkles className="h-3 w-3 text-forest" />
-                    DEMO_WORKFORCE_CONTEXT
+                  <div className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-medium text-muted">
+                    <Sparkles className="h-3.5 w-3.5 text-forest" />
+                    Workforce Context Grounded
                   </div>
                 ) : null}
               </div>

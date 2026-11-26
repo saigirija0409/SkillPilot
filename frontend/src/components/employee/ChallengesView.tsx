@@ -177,10 +177,10 @@ export function ChallengesView() {
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
               Test Your Knowledge
             </p>
-            <h2 className="font-editorial text-3xl text-ink">
+            <h2 className="font-editorial text-[28px] sm:text-[32px] text-ink">
               Sample Skill{" "}
               <span className="italic text-forest">Assessments</span>
             </h2>
@@ -225,10 +225,10 @@ export function ChallengesView() {
       <Card padding="lg" className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
               Build Your Daily Momentum
             </p>
-            <h2 className="font-editorial text-2xl text-ink">Daily Quests</h2>
+            <h2 className="font-editorial text-[24px] sm:text-[28px] text-ink">Daily Quests</h2>
           </div>
           <StatusLabel
             tone="in_progress"
@@ -249,15 +249,15 @@ export function ChallengesView() {
               ) : (
                 <Circle className="mt-0.5 h-5 w-5 text-muted shrink-0" />
               )}
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <p
-                  className={`text-sm font-semibold ${
+                  className={`text-[15px] font-semibold ${
                     q.completed ? "line-through text-muted" : "text-ink"
                   }`}
                 >
                   {q.title}
                 </p>
-                <p className="text-[11px] font-bold text-forest">
+                <p className="text-xs font-bold text-forest">
                   +{q.xp} Engagement XP
                 </p>
               </div>
@@ -309,10 +309,10 @@ export function ChallengesView() {
                     </span>
                   </div>
 
-                  <h3 className="font-editorial text-2xl leading-snug text-ink">
+                  <h3 className="font-editorial text-[24px] leading-snug text-ink">
                     {ch.title}
                   </h3>
-                  <p className="text-xs leading-relaxed text-muted">
+                  <p className="text-[14px] leading-relaxed text-muted">
                     {ch.prompt}
                   </p>
                   <SkillChip name={ch.skill} status="self_reported" />

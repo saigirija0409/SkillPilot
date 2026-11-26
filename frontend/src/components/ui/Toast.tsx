@@ -63,10 +63,10 @@ export function ToastBanner({
     >
       <div className="flex items-start gap-3">
         <div className="mt-0.5">{style.icon}</div>
-        <div className="space-y-0.5">
-          <p className="text-sm font-semibold text-ink">{title}</p>
+        <div className="space-y-1">
+          <p className="text-[15px] font-semibold text-ink">{title}</p>
           {description ? (
-            <p className="text-xs leading-relaxed text-muted">{description}</p>
+            <p className="text-[13px] sm:text-sm leading-relaxed text-muted">{description}</p>
           ) : null}
         </div>
       </div>

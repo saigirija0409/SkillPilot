@@ -329,10 +329,10 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
       <Card padding="lg" className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
               Journal Preferences
             </p>
-            <h2 className="flex items-center gap-2 font-editorial text-2xl text-ink">
+            <h2 className="flex items-center gap-2 font-editorial text-[24px] sm:text-[28px] text-ink">
               <Bell className="h-5 w-5 text-forest" />
               Notifications &amp; Privacy Controls
             </h2>
@@ -340,8 +340,8 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
           <StatusLabel tone="neutral" label="Stored Locally in Browser" />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex items-start gap-2.5 rounded-xl border border-line bg-canvas p-3.5 text-xs text-ink cursor-pointer">
+        <div className="grid gap-3.5 sm:grid-cols-2">
+          <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-4 text-[14px] text-ink cursor-pointer">
             <input
               type="checkbox"
               checked={demoState.notificationPrefs.dailyDigest}
@@ -356,7 +356,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
             </span>
           </label>
 
-          <label className="flex items-start gap-2.5 rounded-xl border border-line bg-canvas p-3.5 text-xs text-ink cursor-pointer">
+          <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-4 text-[14px] text-ink cursor-pointer">
             <input
               type="checkbox"
               checked={demoState.notificationPrefs.streakNudge}
@@ -371,7 +371,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
             </span>
           </label>
 
-          <label className="flex items-start gap-2.5 rounded-xl border border-line bg-canvas p-3.5 text-xs text-ink cursor-pointer">
+          <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-4 text-[14px] text-ink cursor-pointer">
             <input
               type="checkbox"
               checked={demoState.notificationPrefs.sponsorshipAlerts}

@@ -254,7 +254,7 @@ export function ManagerOverviewView({
           {/* Interactive Team Capability Growth Constellation SVG */}
           <div className="rounded-2xl border border-line bg-canvas p-5 lg:col-span-6 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+              <span className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
                 Department Capability Map
               </span>
               <span className="text-xs font-semibold text-forest">
@@ -449,12 +449,12 @@ export function ManagerOverviewView({
         <Card padding="lg" className="lg:col-span-6 space-y-5">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
                 {hasLiveOrgTeam
                   ? "Live Organization Readiness"
                   : "Team Development Journeys"}
               </p>
-              <h2 className="font-editorial text-3xl text-ink">
+              <h2 className="font-editorial text-[28px] sm:text-[32px] leading-tight text-ink">
                 {hasLiveOrgTeam ? "Authorized Team Roster" : "Team Momentum"}
               </h2>
             </div>
@@ -494,9 +494,9 @@ export function ManagerOverviewView({
               ? analytics.members.slice(0, 4).map((m) => (
                 <div
                   key={m.user_id}
-                  className="rounded-xl border border-line bg-canvas p-3.5 space-y-2"
+                  className="rounded-xl border border-line bg-canvas p-4 space-y-2"
                 >
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center justify-between text-[14px]">
                     <span className="font-bold text-ink">
                       {m.full_name || m.email} (
                       {m.target_role_title || "No Target Role"})
@@ -516,9 +516,9 @@ export function ManagerOverviewView({
               : employees.slice(0, 3).map((emp) => (
                 <div
                   key={emp.id}
-                  className="rounded-xl border border-line bg-canvas p-3.5 space-y-2"
+                  className="rounded-xl border border-line bg-canvas p-4 space-y-2"
                 >
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center justify-between text-[14px]">
                     <span className="font-bold text-ink">
                       {emp.name} ({emp.department})
                     </span>
@@ -540,10 +540,10 @@ export function ManagerOverviewView({
         <Card padding="lg" className="lg:col-span-6 space-y-5">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
                 Recommended Strategy Actions
               </p>
-              <h2 className="font-editorial text-3xl text-ink">
+              <h2 className="font-editorial text-[28px] sm:text-[32px] leading-tight text-ink">
                 Training Priorities &amp; Portals
               </h2>
             </div>
@@ -558,7 +558,7 @@ export function ManagerOverviewView({
             {MANAGER_TRAINING_CATALOG.slice(0, 3).map((tr) => (
               <div
                 key={tr.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-canvas px-4 py-3 text-xs"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-canvas px-4 py-3.5 text-[14px]"
               >
                 <div>
                   <p className="font-bold text-ink">{tr.title}</p>

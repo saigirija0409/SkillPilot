@@ -27,9 +27,9 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
-  sm: "h-9 px-3.5 text-xs gap-1.5 rounded-lg",
-  md: "h-11 px-5 text-sm gap-2 rounded-xl",
-  lg: "h-12 px-6 text-base gap-2.5 rounded-xl",
+  sm: "h-10 px-4 text-[13px] sm:text-sm gap-2 rounded-xl",
+  md: "h-11 px-5 text-sm sm:text-[15px] gap-2 rounded-xl",
+  lg: "h-12 px-6 text-[15px] sm:text-base gap-2.5 rounded-xl",
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(

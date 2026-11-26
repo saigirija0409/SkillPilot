@@ -143,7 +143,7 @@ export function PortalLayoutFrame({
           {groups.map((group) => (
             <div key={group.title} className="space-y-1.5">
               {!isCollapsed ? (
-                <p className="px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+                <p className="px-3 text-xs font-bold uppercase tracking-[0.12em] text-muted">
                   {group.title}
                 </p>
               ) : (
@@ -163,12 +163,12 @@ export function PortalLayoutFrame({
                         title={isCollapsed ? item.label : undefined}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "flex items-center justify-between gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
+                          "flex items-center justify-between gap-2.5 rounded-xl px-3.5 py-2.5 text-[15px] font-medium transition-colors",
                           active
                             ? portalVariant === "employee"
-                              ? "bg-forest text-[#FFFDF8]"
-                              : "bg-ink text-[#FFFDF8]"
-                            : "text-muted hover:bg-surface-muted hover:text-ink",
+                              ? "bg-forest font-semibold text-[#FFFDF8]"
+                              : "bg-ink font-semibold text-[#FFFDF8]"
+                            : "text-ink/80 hover:bg-surface-muted hover:text-ink",
                           isCollapsed && "justify-center px-2"
                         )}
                       >
@@ -184,10 +184,10 @@ export function PortalLayoutFrame({
                         {!isCollapsed && item.badge ? (
                           <span
                             className={cn(
-                              "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold",
+                              "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold",
                               active
                                 ? "bg-pistachio text-ink"
-                                : "bg-surface-muted text-muted"
+                                : "bg-surface-muted text-ink"
                             )}
                           >
                             {item.badge}
@@ -208,7 +208,7 @@ export function PortalLayoutFrame({
         {switchPortalLink && !isCollapsed ? (
           <Link
             href={switchPortalLink.href}
-            className="block rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-semibold text-forest transition hover:bg-pistachio/40"
+            className="block rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-[13px] font-semibold text-forest transition hover:bg-pistachio/40"
           >
             {switchPortalLink.label} →
           </Link>
@@ -220,7 +220,7 @@ export function PortalLayoutFrame({
           onClick={() => void handleLogout()}
           title={isCollapsed ? "Sign out" : undefined}
           className={cn(
-            "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-muted transition hover:bg-surface-muted hover:text-ink disabled:opacity-50 cursor-pointer",
+            "flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-[15px] font-medium text-ink/80 transition hover:bg-surface-muted hover:text-ink disabled:opacity-50 cursor-pointer",
             isCollapsed && "justify-center px-2"
           )}
         >
@@ -273,10 +273,10 @@ export function PortalLayoutFrame({
               <Menu className="h-4 w-4" />
             </button>
 
-            <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs sm:text-sm">
-              <span className="font-semibold text-muted">{portalName}</span>
+            <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm">
+              <span className="font-medium text-muted">{portalName}</span>
               <span className="text-line-strong">/</span>
-              <span className="hidden text-muted sm:inline">{currentGroup}</span>
+              <span className="hidden font-medium text-muted sm:inline">{currentGroup}</span>
               <span className="hidden text-line-strong sm:inline">/</span>
               <span className="font-semibold text-ink">{currentLabel}</span>
             </nav>
@@ -284,7 +284,7 @@ export function PortalLayoutFrame({
 
           <div className="relative flex items-center gap-2.5">
             {organizationLabel ? (
-              <span className="hidden rounded-full border border-line bg-canvas px-3 py-1 text-xs font-semibold text-muted md:inline-flex">
+              <span className="hidden rounded-full border border-line bg-canvas px-3.5 py-1 text-xs sm:text-[13px] font-semibold text-ink/80 md:inline-flex">
                 {organizationLabel}
               </span>
             ) : null}
@@ -310,22 +310,21 @@ export function PortalLayoutFrame({
               </button>
 
               {notificationsOpen ? (
-                <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-elevated)]">
+                <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-line bg-surface p-5 shadow-[var(--shadow-elevated)]">
                   <div className="flex items-center justify-between border-b border-line pb-2.5">
-                    <p className="text-xs font-bold uppercase tracking-wider text-ink">
+                    <p className="text-[13px] font-bold uppercase tracking-wider text-ink">
                       Notifications
                     </p>
                     <button
                       type="button"
                       onClick={() => setNotificationsOpen(false)}
-                      className="text-xs text-muted hover:text-ink cursor-pointer"
+                      className="text-xs sm:text-[13px] font-medium text-muted hover:text-ink cursor-pointer"
                     >
                       Close
                     </button>
                   </div>
-                  <p className="mt-3 text-xs leading-relaxed text-muted">
-                    Notifications foundation active. Live learning reminders and
-                    realtime team activity alerts connect in Phases 4 &amp; 5.
+                  <p className="mt-3 text-[13px] sm:text-sm leading-relaxed text-muted">
+                    You&apos;re caught up. Updates for assessments, sponsorship reviews, and team milestones appear here.
                   </p>
                 </div>
               ) : null}
@@ -340,41 +339,41 @@ export function PortalLayoutFrame({
                   setProfileMenuOpen((v) => !v);
                   setNotificationsOpen(false);
                 }}
-                className="inline-flex items-center gap-2 rounded-xl border border-line bg-surface px-2.5 py-1.5 text-left transition hover:bg-surface-muted cursor-pointer"
+                className="inline-flex items-center gap-2.5 rounded-xl border border-line bg-surface px-3 py-1.5 text-left transition hover:bg-surface-muted cursor-pointer"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-pistachio text-xs font-bold text-ink">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-pistachio text-xs font-bold text-ink">
                   {initials || "SP"}
                 </span>
-                <span className="hidden max-w-[140px] truncate text-xs font-semibold text-ink md:inline">
+                <span className="hidden max-w-[160px] truncate text-sm font-semibold text-ink md:inline">
                   {fullName || userEmail}
                 </span>
-                <ChevronDown className="h-3.5 w-3.5 text-muted" />
+                <ChevronDown className="h-4 w-4 text-muted" />
               </button>
 
               {profileMenuOpen ? (
-                <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-line bg-surface p-2 shadow-[var(--shadow-elevated)]">
-                  <div className="border-b border-line px-3 py-2">
-                    <p className="truncate text-xs font-bold text-ink">
+                <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-line bg-surface p-2.5 shadow-[var(--shadow-elevated)]">
+                  <div className="border-b border-line px-3 py-2.5">
+                    <p className="truncate text-sm font-bold text-ink">
                       {fullName || "SkillPilot User"}
                     </p>
-                    <p className="truncate text-[11px] text-muted">{userEmail}</p>
+                    <p className="truncate text-xs sm:text-[13px] text-muted">{userEmail}</p>
                   </div>
-                  <div className="mt-1 space-y-1">
+                  <div className="mt-1.5 space-y-1">
                     <Link
                       href={settingsHref}
                       onClick={() => setProfileMenuOpen(false)}
-                      className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-ink hover:bg-surface-muted"
+                      className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-ink hover:bg-surface-muted"
                     >
-                      <Settings className="h-3.5 w-3.5 text-muted" />
+                      <Settings className="h-4 w-4 text-muted" />
                       Profile &amp; Settings
                     </Link>
                     <button
                       type="button"
                       disabled={signingOut}
                       onClick={() => void handleLogout()}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold text-[#8C371C] hover:bg-[var(--status-attention-bg)] cursor-pointer"
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-medium text-[#8C371C] hover:bg-[var(--status-attention-bg)] cursor-pointer"
                     >
-                      <LogOut className="h-3.5 w-3.5" />
+                      <LogOut className="h-4 w-4" />
                       {signingOut ? "Signing out..." : "Logout"}
                     </button>
                   </div>

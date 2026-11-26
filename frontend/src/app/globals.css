@@ -16,10 +16,10 @@
   --pastel-peach: #f4c9b4;
 
   /* Typography & Borders */
-  --text-primary: #202622;
-  --text-secondary: #68736c;
+  --text-primary: #1a201c;
+  --text-secondary: #4a554e;
   --border-subtle: #e2dfd5;
-  --border-strong: #cbc6b8;
+  --border-strong: #c6c0b1;
 
   /* Semantic Status Tokens (Harmonious Editorial Palette) */
   --status-verified-bg: #e5efe6;
@@ -74,6 +74,7 @@
     background-color: var(--bg-canvas);
     color: var(--text-primary);
     font-family: var(--font-sans);
+    font-size: 15px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
   }

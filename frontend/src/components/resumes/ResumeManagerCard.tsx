@@ -404,7 +404,7 @@ export function ResumeManagerCard({
             ))}
           </div>
 
-          <p className="text-[11px] text-muted">
+          <p className="text-xs sm:text-[13px] text-muted">
             Matched catalog skills save as{" "}
             <strong className="text-ink">inferred</strong> proficiency — never
             marked verified without assessment.

@@ -45,7 +45,7 @@ export function SkillChip({
       <span className="font-semibold">{name}</span>
 
       {typeof level === "number" ? (
-        <span className="rounded-full bg-canvas/80 px-1.5 py-0.5 text-[10px] font-bold tracking-tight text-ink">
+        <span className="rounded-full bg-canvas/90 px-2 py-0.5 text-xs font-bold tracking-tight text-ink">
           L{level}
         </span>
       ) : null}
@@ -67,7 +67,7 @@ export function SkillChip({
   );
 
   const sharedClasses = cn(
-    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition",
+    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] font-medium transition",
     CHIP_STYLES[status],
     interactive && "hover:brightness-[0.97] cursor-pointer",
     className

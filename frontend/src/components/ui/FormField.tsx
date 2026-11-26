@@ -25,7 +25,7 @@ export function FieldWrapper({
     <div className={cn("space-y-1.5", className)}>
       <label
         htmlFor={htmlFor}
-        className="block text-sm font-semibold text-ink"
+        className="block text-sm sm:text-[15px] font-semibold text-ink"
       >
         {label}
         {required ? <span className="ml-1 text-[#A14B2C]">*</span> : null}
@@ -34,18 +34,18 @@ export function FieldWrapper({
       {children}
 
       {error ? (
-        <p role="alert" className="text-xs font-medium text-[#8C371C]">
+        <p role="alert" className="text-xs sm:text-[13px] font-medium text-[#8C371C]">
           {error}
         </p>
       ) : hint ? (
-        <p className="text-xs text-muted">{hint}</p>
+        <p className="text-xs sm:text-[13px] text-muted">{hint}</p>
       ) : null}
     </div>
   );
 }
 
 const CONTROL_BASE =
-  "w-full rounded-xl border border-line-strong bg-surface px-4 py-2.5 text-sm text-ink placeholder:text-muted/70 transition focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/15 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-65";
+  "w-full rounded-xl border border-line-strong bg-surface px-4 py-2.5 text-[15px] sm:text-base text-ink placeholder:text-muted/75 transition focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/15 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-65";
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {

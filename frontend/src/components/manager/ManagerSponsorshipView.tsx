@@ -190,7 +190,7 @@ export function ManagerSponsorshipView() {
                       }
                       label={formatSponsorshipStatus(req.status)}
                     />
-                    <span className="text-sm font-bold text-forest">
+                    <span className="text-[15px] font-bold text-forest">
                       ₹{req.amountInr.toLocaleString("en-IN")} INR
                     </span>
                   </div>
@@ -198,14 +198,14 @@ export function ManagerSponsorshipView() {
                   <h2 className="font-editorial text-2xl leading-snug text-ink">
                     {cleanDisplayText(req.title)}
                   </h2>
-                  <p className="text-xs font-semibold text-muted">
+                  <p className="text-[13px] font-semibold text-muted">
                     Employee: {req.requesterName || "SkillPilot Learner"} •
                     Skill Gap: {req.targetSkill} • {req.submittedAt}
                   </p>
-                  <p className="text-xs leading-relaxed text-ink">
+                  <p className="text-[14px] leading-relaxed text-ink">
                     <strong>Outcome:</strong> {req.expectedOutcomes}
                   </p>
-                  <p className="text-xs leading-relaxed text-muted">
+                  <p className="text-[14px] leading-relaxed text-muted">
                     <strong>Justification:</strong> {req.justification}
                   </p>
 

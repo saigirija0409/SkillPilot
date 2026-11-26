@@ -82,9 +82,9 @@ export function SidebarShell({
                 onClick={onCloseMobile}
                 title={isCollapsed ? item.label : undefined}
                 className={cn(
-                  "flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors",
+                  "flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-[15px] font-medium transition-colors",
                   active
-                    ? "bg-forest text-[#FFFDF8]"
+                    ? "bg-forest text-[#FFFDF8] font-semibold"
                     : "text-muted hover:bg-surface-muted hover:text-ink",
                   isCollapsed && "justify-center px-2"
                 )}
@@ -99,7 +99,7 @@ export function SidebarShell({
                 {!isCollapsed && item.badge ? (
                   <span
                     className={cn(
-                      "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                      "rounded-full px-2.5 py-0.5 text-xs font-semibold",
                       active
                         ? "bg-pistachio text-ink"
                         : "bg-surface-muted text-muted"

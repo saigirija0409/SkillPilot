@@ -134,23 +134,23 @@ export function ManagerHeatmapView() {
         <Card padding="lg" className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
                 Live FastAPI Organization Matrix ({analytics.team_size} members)
               </p>
-              <h2 className="font-editorial text-2xl text-ink">
+              <h2 className="font-editorial text-[26px] sm:text-[28px] text-ink">
                 Live Team Skill Coverage
               </h2>
             </div>
             <StatusLabel tone="verified" label="Live Backend Heatmap" />
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
             {analytics.skill_heatmap.map((cell) => {
               const met = cell.team_gap <= 0;
               return (
                 <div
                   key={cell.skill_name}
-                  className={`rounded-2xl border p-4 text-xs space-y-2 ${
+                  className={`rounded-2xl border p-4 text-sm space-y-2 ${
                     met
                       ? "border-[#BDD3C1] bg-[#D9E8B5]/65"
                       : cell.team_gap < 1.5
@@ -225,16 +225,16 @@ export function ManagerHeatmapView() {
 
       <div className="grid gap-6 lg:grid-cols-12">
         <Card padding="md" className="lg:col-span-8 xl:col-span-9 overflow-x-auto">
-          <table className="w-full min-w-[600px] border-separate border-spacing-2 text-left text-xs">
+          <table className="w-full min-w-[640px] border-separate border-spacing-2 text-left text-sm">
             <thead>
               <tr>
-                <th className="px-2 py-2 font-bold uppercase tracking-wider text-muted">
+                <th className="px-2 py-2 text-[13px] font-bold uppercase tracking-wider text-muted">
                   Department
                 </th>
                 {visibleSkills.map((sk) => (
                   <th
                     key={sk.name}
-                    className="px-2 py-2 text-center font-bold text-ink"
+                    className="px-2 py-2 text-center text-[13px] font-bold text-ink"
                   >
                     {sk.name}
                   </th>
@@ -244,7 +244,7 @@ export function ManagerHeatmapView() {
             <tbody>
               {visibleDepartments.map((dept) => (
                 <tr key={dept}>
-                  <td className="px-2 py-2 font-bold text-ink whitespace-nowrap">
+                  <td className="px-2 py-2.5 text-[14px] font-bold text-ink whitespace-nowrap">
                     {dept}
                   </td>
                   {visibleSkills.map((sk) => {
@@ -280,7 +280,7 @@ export function ManagerHeatmapView() {
                             )}
                             <span>{cell.roundedAvg}/5</span>
                           </div>
-                          <p className="mt-0.5 text-[10px] font-semibold">
+                          <p className="mt-1 text-xs font-semibold">
                             {cell.state === "met"
                               ? "Met ✓"
                               : cell.state === "developing"
@@ -336,13 +336,13 @@ export function ManagerHeatmapView() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted">
                 Department Members ({activeDetails.members.length})
               </p>
               {activeDetails.members.map((m) => (
                 <div
                   key={m.id}
-                  className="flex items-center justify-between rounded-xl border border-line bg-canvas px-3 py-2 text-xs"
+                  className="flex items-center justify-between rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-[14px]"
                 >
                   <span className="font-semibold text-ink">{m.name}</span>
                   <span className="font-bold text-forest">
@@ -352,14 +352,14 @@ export function ManagerHeatmapView() {
               ))}
             </div>
 
-            <div className="space-y-2 border-t border-line pt-3">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
+            <div className="space-y-2.5 border-t border-line pt-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted">
                 Recommended Learning Actions
               </p>
               {matchingTrainings.map((tr) => (
                 <div
                   key={tr.id}
-                  className="rounded-xl border border-line bg-canvas p-3 text-xs space-y-1"
+                  className="rounded-xl border border-line bg-canvas p-3.5 text-[14px] space-y-1"
                 >
                   <p className="font-bold text-ink">{tr.title}</p>
                   <p className="text-muted">

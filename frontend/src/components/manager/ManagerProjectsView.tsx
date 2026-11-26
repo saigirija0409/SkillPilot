@@ -282,7 +282,7 @@ export function ManagerProjectsView() {
             <h3 className="font-editorial text-2xl text-ink">
               Transparent Calculation
             </h3>
-            <p className="rounded-xl border border-line bg-canvas px-3.5 py-2.5 font-mono text-[11px] text-ink">
+            <p className="rounded-xl border border-line bg-canvas px-4 py-3 font-mono text-[13px] text-ink">
               Skill coverage = min(current / required, 1)
               <br />
               Overall = weighted average by importance
@@ -293,14 +293,14 @@ export function ManagerProjectsView() {
                 Available Competencies ({availableCompetencies.length})
               </p>
               {availableCompetencies.length === 0 ? (
-                <p className="text-xs text-muted">
+                <p className="text-[14px] text-muted">
                   No competencies currently above 85% coverage threshold.
                 </p>
               ) : (
                 availableCompetencies.map((b) => (
                   <div
                     key={b.req.id}
-                    className="flex items-center justify-between rounded-xl border border-[#C5D89B] bg-[#D9E8B5]/40 px-3 py-2 text-xs"
+                    className="flex items-center justify-between rounded-xl border border-[#C5D89B] bg-[#D9E8B5]/40 px-3.5 py-2.5 text-[14px]"
                   >
                     <span className="font-bold text-ink">{b.req.skill}</span>
                     <span className="font-semibold text-forest">

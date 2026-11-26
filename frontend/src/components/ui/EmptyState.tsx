@@ -28,8 +28,8 @@ export function EmptyState({
         <div className="mb-5">{illustration}</div>
       ) : null}
 
-      <h3 className="font-editorial text-2xl text-ink">{title}</h3>
-      <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">
+      <h3 className="font-editorial text-[26px] sm:text-3xl text-ink">{title}</h3>
+      <p className="mt-2.5 max-w-lg text-[15px] leading-relaxed text-muted">
         {description}
       </p>
 

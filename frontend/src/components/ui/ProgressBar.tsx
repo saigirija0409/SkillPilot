@@ -37,7 +37,7 @@ export function ProgressBar({
   return (
     <div className={cn("space-y-2", className)}>
       {label || showValue ? (
-        <div className="flex items-center justify-between gap-2 text-xs font-semibold">
+        <div className="flex items-center justify-between gap-2 text-[13px] sm:text-sm font-semibold">
           {label ? <span className="text-ink">{label}</span> : <span />}
           {showValue ? <span className="text-muted">{pct}%</span> : null}
         </div>
@@ -88,7 +88,7 @@ export function StepProgress({
             <li
               key={title}
               className={cn(
-                "flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-xs transition-colors",
+                "flex items-center gap-3 rounded-xl border px-3.5 py-3 text-sm transition-colors",
                 isActive && "border-forest bg-forest-soft text-ink",
                 isComplete && "border-[#BDD3C1] bg-pistachio/45 text-ink",
                 !isActive && !isComplete && "border-line bg-surface text-muted"
@@ -96,7 +96,7 @@ export function StepProgress({
             >
               <span
                 className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
                   isActive && "bg-forest text-[#FFFDF8]",
                   isComplete && "bg-[#3C6E4D] text-[#FFFDF8]",
                   !isActive && !isComplete && "bg-surface-muted text-muted"

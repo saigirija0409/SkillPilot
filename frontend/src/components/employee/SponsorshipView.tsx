@@ -223,10 +223,10 @@ export function SponsorshipView({ requesterName }: SponsorshipViewProps) {
               {demoState.sponsorshipRequests.map((req) => (
                 <div
                   key={req.id}
-                  className="rounded-2xl border border-line bg-canvas p-4 space-y-2 text-xs"
+                  className="rounded-2xl border border-line bg-canvas p-4 sm:p-5 space-y-2 text-[14px]"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-ink">
+                    <p className="text-[17px] font-bold text-ink">
                       {cleanDisplayText(req.title)}
                     </p>
                     <StatusLabel

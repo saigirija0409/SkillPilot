@@ -168,7 +168,7 @@ export function ManagerAnalyticsView() {
             </div>
           </div>
 
-          <p className="text-xs font-semibold text-muted">
+          <p className="text-[13px] sm:text-sm font-semibold text-muted">
             Demo assessments passed:{" "}
             <strong className="text-forest">
               {Object.keys(employeeEvidence).length}

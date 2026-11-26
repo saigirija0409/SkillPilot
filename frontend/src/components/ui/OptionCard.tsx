@@ -64,17 +64,17 @@ export function OptionCard({
           </div>
         ) : null}
 
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-ink">{title}</span>
+            <span className="text-[15px] sm:text-base font-semibold text-ink">{title}</span>
             {badge ? (
-              <span className="rounded-full border border-line bg-surface px-2 py-0.5 text-[11px] font-medium text-muted">
+              <span className="rounded-full border border-line bg-surface px-2.5 py-0.5 text-xs font-medium text-muted">
                 {badge}
               </span>
             ) : null}
           </div>
           {description ? (
-            <p className="text-xs leading-relaxed text-muted">{description}</p>
+            <p className="text-[14px] leading-relaxed text-muted">{description}</p>
           ) : null}
         </div>
       </div>

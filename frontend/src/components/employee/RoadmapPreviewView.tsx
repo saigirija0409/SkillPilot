@@ -418,10 +418,10 @@ export function RoadmapPreviewView({ userId }: RoadmapPreviewViewProps) {
         <Card padding="lg" className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
                 {cleanDisplayText(activeRoadmap?.title)} • Winding Path
               </p>
-              <h2 className="font-editorial text-2xl text-ink">
+              <h2 className="font-editorial text-[24px] sm:text-[28px] text-ink">
                 Inspect milestones along your live Gemini plan
               </h2>
             </div>
@@ -530,17 +530,17 @@ export function RoadmapPreviewView({ userId }: RoadmapPreviewViewProps) {
             </svg>
 
             {highlightedSvgItem ? (
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-xs">
-              <p className="font-bold text-ink">
-                    {cleanDisplayText(highlightedSvgItem.title)}
-                  </p>
-                  <p className="text-muted">
-                    Day {highlightedSvgItem.day_bucket} •{" "}
-                    {highlightedSvgItem.estimated_minutes} mins
-                    {highlightedSvgItem.notes || highlightedSvgItem.rationale
-                      ? ` • ${cleanDisplayText(highlightedSvgItem.notes || highlightedSvgItem.rationale)}`
-                      : ""}
-                  </p>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3.5 text-[13px] sm:text-sm">
+                <p className="font-bold text-ink">
+                  {cleanDisplayText(highlightedSvgItem.title)}
+                </p>
+                <p className="text-muted">
+                  Day {highlightedSvgItem.day_bucket} •{" "}
+                  {highlightedSvgItem.estimated_minutes} mins
+                  {highlightedSvgItem.notes || highlightedSvgItem.rationale
+                    ? ` • ${cleanDisplayText(highlightedSvgItem.notes || highlightedSvgItem.rationale)}`
+                    : ""}
+                </p>
                 {highlightedSvgItem.id ? (
                   <Button
                     size="sm"

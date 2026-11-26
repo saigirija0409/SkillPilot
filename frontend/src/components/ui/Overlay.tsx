@@ -78,7 +78,7 @@ export function Modal({
                   {title}
                 </h3>
                 {description ? (
-                  <p className="text-sm text-muted">{description}</p>
+                  <p className="text-[14px] sm:text-[15px] leading-relaxed text-muted">{description}</p>
                 ) : null}
               </div>
 
@@ -165,7 +165,7 @@ export function Drawer({
                   {title}
                 </h3>
                 {description ? (
-                  <p className="text-sm text-muted">{description}</p>
+                  <p className="text-[14px] sm:text-[15px] leading-relaxed text-muted">{description}</p>
                 ) : null}
               </div>
 

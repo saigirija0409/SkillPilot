@@ -383,7 +383,7 @@ export function SkillPassportView({ userId }: SkillPassportViewProps) {
                     tone={badge.tier === "verified" ? "forest" : "pistachio"}
                     size="sm"
                   />
-                  <p className="text-[11px] font-semibold text-forest">
+                  <p className="text-xs font-semibold text-forest">
                     Click badge to inspect evidence &amp; history
                   </p>
                 </div>

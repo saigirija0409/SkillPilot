@@ -96,7 +96,7 @@ export function AuthForm({ mode, supabaseConfigured }: AuthFormProps) {
             </>
           )}
         </h1>
-        <p className="text-sm leading-relaxed text-muted">
+        <p className="text-[14px] sm:text-[15px] leading-relaxed text-muted">
           {isSignup
             ? "New accounts start with standard learner permissions. Organization roles are assigned securely by administrators."
             : "Access your guided onboarding, skill intelligence, and personalized roadmap."}
@@ -147,7 +147,7 @@ export function AuthForm({ mode, supabaseConfigured }: AuthFormProps) {
         <div className="space-y-1.5">
           <label
             htmlFor="auth-password"
-            className="block text-sm font-semibold text-ink"
+            className="block text-sm sm:text-[15px] font-semibold text-ink"
           >
             Password <span className="ml-0.5 text-[#A14B2C]">*</span>
           </label>
@@ -160,7 +160,7 @@ export function AuthForm({ mode, supabaseConfigured }: AuthFormProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimum 8 characters"
-              className="w-full rounded-xl border border-line-strong bg-surface px-4 py-2.5 pr-11 text-sm text-ink placeholder:text-muted/70 transition focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/15"
+              className="w-full rounded-xl border border-line-strong bg-surface px-4 py-3 pr-11 text-[15px] sm:text-base text-ink placeholder:text-muted/75 transition focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/15"
             />
             <button
               type="button"
@@ -175,7 +175,7 @@ export function AuthForm({ mode, supabaseConfigured }: AuthFormProps) {
               )}
             </button>
           </div>
-          <p className="text-xs text-muted">
+          <p className="text-[13px] text-muted">
             Use at least 8 characters for account security.
           </p>
         </div>

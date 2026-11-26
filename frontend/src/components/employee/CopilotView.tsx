@@ -178,7 +178,7 @@ export function CopilotView({ userId }: CopilotViewProps) {
           />
 
           <Card padding="md" className="space-y-2.5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
               Suggested Prompts
             </p>
             {QUICK_PROMPTS.map((q) => (
@@ -186,7 +186,7 @@ export function CopilotView({ userId }: CopilotViewProps) {
                 key={q}
                 type="button"
                 onClick={() => sendDemoPrompt(q)}
-                className="block w-full rounded-xl border border-line bg-canvas px-3 py-2.5 text-left text-xs font-semibold text-ink transition hover:border-forest cursor-pointer"
+                className="block w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-left text-[13px] font-semibold text-ink transition hover:border-forest cursor-pointer"
               >
                 {q}
               </button>
@@ -200,7 +200,7 @@ export function CopilotView({ userId }: CopilotViewProps) {
             {demoState.copilotMessages.map((msg) => (
               <div
                 key={msg.id}
-                className={`rounded-2xl border p-4 text-sm ${msg.role === "user"
+                className={`rounded-2xl border p-4 text-[15px] ${msg.role === "user"
                   ? "ml-auto max-w-md border-forest bg-forest text-[#FFFDF8]"
                   : "border-line bg-canvas text-ink"
                   }`}
@@ -229,7 +229,7 @@ export function CopilotView({ userId }: CopilotViewProps) {
                     {msg.toolsUsed.map((t) => (
                       <span
                         key={t}
-                        className="rounded-full border border-line bg-surface px-2 py-0.5 font-mono text-[10px] text-muted"
+                        className="rounded-full border border-line bg-surface px-2.5 py-0.5 font-mono text-xs text-muted"
                       >
                         {t}
                       </span>

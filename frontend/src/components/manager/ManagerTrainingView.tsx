@@ -185,14 +185,14 @@ export function ManagerTrainingView() {
                       )}
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-bold text-ink">
+                          <span className="text-[15px] font-bold text-ink">
                             {tr.title}
                           </span>
                           {matchesPriority ? (
                             <StatusLabel tone="verified" label="Priority Match" />
                           ) : null}
                         </div>
-                        <p className="text-xs text-muted">
+                        <p className="text-[13px] text-muted">
                           {tr.departmentFocus} • {tr.durationHours} hrs •{" "}
                           {tr.costPerSeatInr === 0
                             ? "Free"
@@ -209,10 +209,10 @@ export function ManagerTrainingView() {
           </Card>
 
           <Card padding="lg" className="space-y-4">
-            <h2 className="font-editorial text-2xl text-ink">
+            <h2 className="font-editorial text-[26px] sm:text-[28px] text-ink">
               3. Participating Employees ({participatingEmployees.length})
             </h2>
-            <div className="grid gap-2.5 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               {eligibleEmployees.map((emp) => {
                 const active = participantIds.includes(emp.id);
                 return (
@@ -220,7 +220,7 @@ export function ManagerTrainingView() {
                     key={emp.id}
                     type="button"
                     onClick={() => toggleParticipant(emp.id)}
-                    className={`flex items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-left text-xs transition cursor-pointer ${
+                    className={`flex items-center justify-between gap-2 rounded-xl border px-3.5 py-3 text-left text-[14px] transition cursor-pointer ${
                       active
                         ? "border-forest bg-[#D9E8B5]/45"
                         : "border-line bg-canvas"

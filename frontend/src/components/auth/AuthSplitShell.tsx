@@ -28,7 +28,7 @@ export function AuthSplitShell({ children, eyebrow }: AuthSplitShellProps) {
             </span>
           </Link>
 
-          <span className="rounded-full border border-pistachio/30 bg-[#365E4A] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-pistachio">
+          <span className="rounded-full border border-pistachio/30 bg-[#365E4A] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-pistachio">
             {eyebrow}
           </span>
         </div>
@@ -43,7 +43,7 @@ export function AuthSplitShell({ children, eyebrow }: AuthSplitShellProps) {
             Good things{" "}
             <span className="italic text-butter">grow with you.</span>
           </h2>
-          <p className="max-w-md text-sm leading-relaxed text-pistachio/90 sm:text-base">
+          <p className="max-w-md text-[15px] leading-relaxed text-pistachio/95 sm:text-base">
             Pick up your career journal where you left off—track verified
             skills, follow realistic learning blocks, and keep your private
             documents under your control.

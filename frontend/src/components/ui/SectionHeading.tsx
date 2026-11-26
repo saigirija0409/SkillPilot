@@ -31,21 +31,21 @@ export function SectionHeading({
     >
       <div className="space-y-1">
         <div className="flex flex-wrap items-center gap-2.5">
-          <h2 className="font-editorial text-2xl leading-tight text-ink sm:text-[28px]">
+          <h2 className="font-editorial text-[26px] leading-tight text-ink sm:text-[32px]">
             {title}{" "}
             {italicWord ? (
               <span className="italic text-forest">{italicWord}</span>
             ) : null}
           </h2>
           {badge ? (
-            <span className="rounded-full border border-line bg-surface-muted px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+            <span className="rounded-full border border-line bg-surface-muted px-3 py-0.5 text-xs font-semibold uppercase tracking-wider text-muted">
               {badge}
             </span>
           ) : null}
         </div>
 
         {description ? (
-          <p className="max-w-2xl text-sm leading-relaxed text-muted">
+          <p className="max-w-3xl text-[15px] leading-relaxed text-muted">
             {description}
           </p>
         ) : null}

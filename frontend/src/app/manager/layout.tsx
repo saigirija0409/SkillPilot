@@ -77,6 +77,7 @@ async function ManagerLayoutInner({
       userEmail={email}
       fullName={fullName}
       accountType={accountType}
+      organizationId={profile?.organization_id ?? null}
     >
       {profileLoadError ? (
         <div className="mb-6 rounded-2xl border border-[var(--status-attention-border)] bg-[var(--status-attention-bg)] p-4 text-sm text-[var(--status-attention-text)]">

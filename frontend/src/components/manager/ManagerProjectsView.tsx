@@ -78,15 +78,18 @@ export function ManagerProjectsView() {
         italicAccent="Readiness Builder"
         subtitle="Define required skills, proficiency thresholds, and importance weights. Requirements sync live with Internal Talent Discovery."
         actions={
-          <Link href="/manager/talent">
-            <Button
-              size="sm"
-              variant="primary"
-              rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
-            >
-              Inspect Matching Talent
-            </Button>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusLabel tone="neutral" label="Prototype mode · Sample data" />
+            <Link href="/manager/talent">
+              <Button
+                size="sm"
+                variant="primary"
+                rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
+              >
+                Inspect Matching Talent
+              </Button>
+            </Link>
+          </div>
         }
       />
 

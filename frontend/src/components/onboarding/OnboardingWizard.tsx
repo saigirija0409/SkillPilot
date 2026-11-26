@@ -750,6 +750,7 @@ export function OnboardingWizard({ userId, userEmail }: OnboardingWizardProps) {
                         userId={userId}
                         resumes={resumes}
                         onResumesChanged={setResumes}
+                        targetRoleHint={resolvedTargetRoleName()}
                       />
 
                       <div className="grid gap-4 rounded-2xl border border-line bg-canvas p-5 text-sm sm:grid-cols-2">

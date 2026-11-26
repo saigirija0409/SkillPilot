@@ -244,6 +244,47 @@ export async function replaceSelfReportedSkills(
   }
 }
 
+export async function saveInferredSkillsFromCatalog(
+  userId: string,
+  inferredInputs: Array<{ skill_id: string; proficiency: number; confidence: number }>
+): Promise<void> {
+  if (inferredInputs.length === 0) return;
+  const supabase = createSupabaseBrowserClient();
+
+  const { data: existingRows } = await supabase
+    .from("user_skills")
+    .select("skill_id, verification_status")
+    .eq("user_id", userId);
+
+  const verifiedSkillIds = new Set(
+    (existingRows ?? [])
+      .filter((r) => r.verification_status === "verified")
+      .map((r) => r.skill_id)
+  );
+
+  // Never downgrade or alter already verified skills
+  const rowsToUpsert = inferredInputs
+    .filter((item) => !verifiedSkillIds.has(item.skill_id))
+    .map((item) => ({
+      user_id: userId,
+      skill_id: item.skill_id,
+      proficiency: Math.max(1, Math.min(5, Math.round(item.proficiency))),
+      verification_status: "inferred" as const,
+      evidence_type: "resume_parsed",
+      evidence_notes: `Extracted via resume NLP (${Math.round(item.confidence * 100)}% confidence)`,
+    }));
+
+  if (rowsToUpsert.length === 0) return;
+
+  const { error } = await supabase
+    .from("user_skills")
+    .upsert(rowsToUpsert, { onConflict: "user_id,skill_id" });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export interface SaveLearningPreferencesPayload {
   interests: string[];
   daily_minutes: number;

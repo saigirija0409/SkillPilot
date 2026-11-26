@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Bot, Send, Sparkles } from "lucide-react";
 
+import { useManagerOrganizationData } from "@/components/portal/ManagerPortalShell";
 import {
   Button,
   Card,
@@ -29,6 +30,7 @@ const MANAGER_SUGGESTED_PROMPTS = [
 ];
 
 export function ManagerCopilotView() {
+  const { analytics } = useManagerOrganizationData();
   const {
     managerState,
     employees,
@@ -38,22 +40,26 @@ export function ManagerCopilotView() {
   } = useManagerDemo();
 
   const [input, setInput] = useState("");
-  const [backendStatus, setBackendStatus] = useState("Checking FastAPI...");
+  const [backendStatus, setBackendStatus] = useState(
+    "Prototype mode · Sample responses"
+  );
 
   useEffect(() => {
     let active = true;
     fetchBackendHealth()
-      .then((h) => {
+      .then((healthRes) => {
         if (!active) return;
-        const geminiConfigured = Boolean(h.integrations?.gemini?.configured);
+        const geminiConfigured = Boolean(
+          healthRes.integrations?.gemini?.configured
+        );
         setBackendStatus(
           geminiConfigured
-            ? "FastAPI Healthy • Agent Execution Pending Phase 5"
-            : "FastAPI Healthy • Demo Preview Active"
+            ? "Prototype mode · Sample responses (Live org context synced)"
+            : "Prototype mode · Sample responses"
         );
       })
       .catch(() => {
-        if (active) setBackendStatus("Backend Unreachable • Demo Preview Active");
+        if (active) setBackendStatus("Prototype mode · Sample data");
       });
     return () => {
       active = false;
@@ -76,7 +82,11 @@ export function ManagerCopilotView() {
     if (!trimmed) return;
 
     const lower = trimmed.toLowerCase();
-    let reply = `[DEMO PREVIEW] Across ${employees.length} team profiles, priority gaps are ${orgSkillAverages.slice(0, 2).map((s) => `${s.skill} (${s.avg}/5)`).join(" and ")}. Remaining demo budget: ₹${remainingTrainingBudgetInr.toLocaleString("en-IN")} INR.`;
+    const liveGapSummary =
+      analytics && analytics.critical_skill_gaps.length > 0
+        ? `Key organizational gaps: ${analytics.critical_skill_gaps.join(", ")} (team readiness ${analytics.avg_readiness_score}% across ${analytics.team_size} members).`
+        : `Lowest department averages: ${orgSkillAverages.slice(0, 2).map((s) => `${s.skill} (${s.avg}/5)`).join(" and ")}.`;
+    let reply = `${liveGapSummary} Remaining training budget: ₹${remainingTrainingBudgetInr.toLocaleString("en-IN")} INR. (Sample strategy guidance)`;
     let actions: Array<{ label: string; href: string }> = [
       { label: "Open Skill Heatmap", href: "/manager/skills" },
       { label: "Budget Simulator", href: "/manager/budget" },
@@ -87,13 +97,13 @@ export function ManagerCopilotView() {
         .filter((e) => (e.skills["Cloud Computing"] ?? 0) < 3)
         .map((e) => `${e.name} (${e.department})`)
         .join(", ");
-      reply = `[DEMO PREVIEW] Team members under level 3/5 in Cloud Computing: ${cloudNeeds || "None — baseline met!"}. Schedule the Production Cloud & Container Hardening Lab (₹5,000/seat INR) inside Training Planner.`;
+      reply = `Team members under level 3/5 in Cloud Computing: ${cloudNeeds || "None — baseline met!"}. Consider scheduling the Production Cloud & Container Hardening Lab (₹5,000/seat INR) in Training Planner. (Sample strategy guidance)`;
       actions = [
         { label: "Schedule Cloud Cohort", href: "/manager/training" },
         { label: "View Cloud Matrix", href: "/manager/skills" },
       ];
     } else if (lower.includes("20,000") || lower.includes("allocate")) {
-      reply = `[DEMO PREVIEW] With ₹20,000 INR: fund 4 seats in Applied Generative AI Workshop (₹18,000 INR) + 0-cost SQL Retention Lab (₹0 INR), targeting your lowest org gaps while keeping ₹2,000 INR reserve.`;
+      reply = `With ₹20,000 INR: fund 4 seats in Applied Generative AI Workshop (₹18,000 INR) plus the zero-cost SQL Retention Lab (₹0 INR), targeting core skill gaps while retaining a ₹2,000 INR reserve. (Sample strategy guidance)`;
       actions = [
         { label: "Model in Budget Simulator", href: "/manager/budget" },
         { label: "Training Planner", href: "/manager/training" },
@@ -111,13 +121,13 @@ export function ManagerCopilotView() {
         .filter((b) => b.gap > 0)
         .map((b) => `${b.req.skill} (-${b.gap.toFixed(1)})`)
         .join(", ");
-      reply = `[DEMO PREVIEW] For "${managerState.projectName}" (${cov.overallPct}% org readiness), missing/developing requirements are: ${missing || "All thresholds met"}. Top internal matches await in Talent Discovery.`;
+      reply = `For "${managerState.projectName}" (${cov.overallPct}% org readiness), missing or developing requirements are: ${missing || "All thresholds met"}. Top internal contributors await in Talent Discovery. (Sample strategy guidance)`;
       actions = [
         { label: "Open Project Readiness", href: "/manager/projects" },
         { label: "Internal Talent Discovery", href: "/manager/talent" },
       ];
     } else if (lower.includes("sponsorship")) {
-      reply = `[DEMO PREVIEW] You have ${pendingReqs.length} pending request(s): ${pendingReqs.map((r) => `${r.title} for ${r.targetSkill} (₹${r.amountInr.toLocaleString("en-IN")} INR)`).join("; ") || "None pending right now"}.`;
+      reply = `You have ${pendingReqs.length} pending request(s): ${pendingReqs.map((r) => `${r.title} for ${r.targetSkill} (₹${r.amountInr.toLocaleString("en-IN")} INR)`).join("; ") || "None pending right now"}. (Sample strategy guidance)`;
       actions = [
         { label: "Review Sponsorship Queue", href: "/manager/sponsorship" },
       ];
@@ -138,13 +148,13 @@ export function ManagerCopilotView() {
         eyebrow="Support • Workforce Strategy Assistant"
         title="Manager"
         italicAccent="Copilot"
-        subtitle="AI-assisted strategy workspace grounded in your organization's skill heatmap, project weights, and shared INR sponsorship queue. Live Gemini execution arrives in Phase 5."
-        actions={<StatusLabel tone="in_progress" label={backendStatus} />}
+        subtitle="Workforce strategy assistant grounded in your skill matrix, project targets, and INR sponsorship priorities."
+        actions={<StatusLabel tone="neutral" label={backendStatus} />}
       />
 
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Organizational Context & Suggested Prompts */}
-        <div className="space-y-5 lg:col-span-4">
+        <div className="space-y-5 lg:col-span-4 xl:col-span-3">
           <PastelCard
             tone="lavender"
             eyebrow={managerState.organizationDisplayName}
@@ -171,16 +181,15 @@ export function ManagerCopilotView() {
         </div>
 
         {/* Conversation Thread */}
-        <Card padding="lg" className="flex flex-col justify-between lg:col-span-8">
-          <div className="max-h-[450px] space-y-4 overflow-y-auto pr-1">
+        <Card padding="lg" className="flex flex-col justify-between lg:col-span-8 xl:col-span-9">
+          <div className="max-h-[540px] space-y-4 overflow-y-auto pr-1">
             {managerState.copilotMessages.map((msg) => (
               <div
                 key={msg.id}
-                className={`rounded-2xl border p-4 text-sm ${
-                  msg.role === "user"
-                    ? "ml-auto max-w-md border-ink bg-ink text-[#FFFDF8]"
-                    : "border-line bg-canvas text-ink"
-                }`}
+                className={`rounded-2xl border p-4 text-sm ${msg.role === "user"
+                  ? "ml-auto max-w-md border-ink bg-ink text-[#FFFDF8]"
+                  : "border-line bg-canvas text-ink"
+                  }`}
               >
                 <p className="leading-relaxed">{msg.text}</p>
                 {msg.actions && msg.actions.length > 0 ? (
@@ -217,7 +226,7 @@ export function ManagerCopilotView() {
           >
             <div className="flex-1">
               <Input
-                label="Ask Strategy Copilot ([DEMO] Preview)"
+                label="Ask Strategy Copilot"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about skill gaps, INR budgets, or team training plans..."

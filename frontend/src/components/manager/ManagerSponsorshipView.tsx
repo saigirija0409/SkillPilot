@@ -23,6 +23,7 @@ import {
 } from "@/components/ui";
 import type { DemoSponsorshipRequest } from "@/lib/demo/employeeDemoStore";
 import { useManagerDemo } from "@/lib/demo/managerDemoStore";
+import { cleanDisplayText, formatSponsorshipStatus } from "@/lib/formatters";
 
 type FilterStatus =
   | "All"
@@ -101,13 +102,16 @@ export function ManagerSponsorshipView() {
         eyebrow="Development • Shared Approval Queue"
         title="Sponsorship"
         italicAccent="Requests"
-        subtitle="Connected directly to the Employee Portal's sponsorship state. Approvals deduct INR budget safely and guard against duplicate deductions."
+        subtitle="Connected directly to the Employee sponsorship queue. Approvals update INR balances cleanly and prevent duplicate deductions."
         actions={
-          <Link href="/manager/budget">
-            <Button size="sm" variant="secondary">
-              Adjust Total Budget
-            </Button>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusLabel tone="neutral" label="Prototype mode · Sample data" />
+            <Link href="/manager/budget">
+              <Button size="sm" variant="secondary">
+                Adjust Total Budget
+              </Button>
+            </Link>
+          </div>
         }
       />
 
@@ -115,7 +119,7 @@ export function ManagerSponsorshipView() {
       <div className="grid gap-5 md:grid-cols-3">
         <PastelCard
           tone="pistachio"
-          eyebrow="[DEMO] Total Org Budget"
+          eyebrow="Total Organization Budget"
           title={`₹${managerState.totalTrainingBudgetInr.toLocaleString("en-IN")} INR`}
           description="Configured in Budget Simulator."
         />
@@ -184,7 +188,7 @@ export function ManagerSponsorshipView() {
                             ? "attention"
                             : "in_progress"
                       }
-                      label={req.status}
+                      label={formatSponsorshipStatus(req.status)}
                     />
                     <span className="text-sm font-bold text-forest">
                       ₹{req.amountInr.toLocaleString("en-IN")} INR
@@ -192,7 +196,7 @@ export function ManagerSponsorshipView() {
                   </div>
 
                   <h2 className="font-editorial text-2xl leading-snug text-ink">
-                    {req.title}
+                    {cleanDisplayText(req.title)}
                   </h2>
                   <p className="text-xs font-semibold text-muted">
                     Employee: {req.requesterName || "SkillPilot Learner"} •
@@ -233,7 +237,7 @@ export function ManagerSponsorshipView() {
       <Drawer
         open={Boolean(liveSelectedReq)}
         onClose={() => setSelectedReq(null)}
-        title={liveSelectedReq?.title || "Sponsorship Review"}
+        title={cleanDisplayText(liveSelectedReq?.title) || "Sponsorship Review"}
         description={
           liveSelectedReq
             ? `${liveSelectedReq.requesterName || "Employee"} • ₹${liveSelectedReq.amountInr.toLocaleString("en-IN")} INR`
@@ -282,7 +286,7 @@ export function ManagerSponsorshipView() {
                   ? "pistachio"
                   : "butter"
               }
-              eyebrow={liveSelectedReq.status}
+              eyebrow={formatSponsorshipStatus(liveSelectedReq.status)}
               title={`₹${liveSelectedReq.amountInr.toLocaleString("en-IN")} INR`}
               description={`Target gap: ${liveSelectedReq.targetSkill} • Submitted ${liveSelectedReq.submittedAt}`}
             />

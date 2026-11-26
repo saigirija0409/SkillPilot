@@ -46,7 +46,7 @@ const DEMO_CHALLENGES: DemoChallenge[] = [
   {
     id: "ch-sql",
     kind: "Weekly Challenge",
-    title: "[DEMO] Cohort Retention SQL Window Query",
+    title: "Cohort Retention SQL Window Query",
     skill: "SQL",
     difficulty: "Intermediate",
     minutes: 35,
@@ -56,7 +56,7 @@ const DEMO_CHALLENGES: DemoChallenge[] = [
   {
     id: "ch-ml",
     kind: "Practical Project",
-    title: "[DEMO] Hybrid INR Opportunity Ranker",
+    title: "Hybrid INR Opportunity Ranker",
     skill: "Scikit-Learn",
     difficulty: "Intermediate",
     minutes: 45,
@@ -66,12 +66,12 @@ const DEMO_CHALLENGES: DemoChallenge[] = [
   {
     id: "ch-sec",
     kind: "Practical Project",
-    title: "[DEMO] Asymmetric JWKS Auth Verification Audit",
+    title: "Asymmetric Token Verification Audit",
     skill: "Identity & Access Management",
     difficulty: "Advanced",
     minutes: 40,
     prompt:
-      "Inspect a FastAPI bearer token flow and enforce signature, issuer, audience, and database-derived profile permissions.",
+      "Inspect a backend bearer token flow and enforce signature, issuer, audience, and database-derived profile permissions.",
   },
 ];
 
@@ -139,7 +139,7 @@ export function ChallengesView() {
         ? `Assessment Passed (${scorePct}%) — Skill Passport Updated!`
         : `Assessment Completed (${scorePct}%)`,
       description: passed
-        ? `Added [DEMO] Demonstrated evidence for ${activeAssessment.skillName}.`
+        ? `Added demonstrated competency evidence for ${activeAssessment.skillName}.`
         : `Score 75%+ to unlock Demonstrated Evidence for ${activeAssessment.skillName}.`,
     });
   }
@@ -157,8 +157,12 @@ export function ChallengesView() {
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <StatusLabel
+              tone="neutral"
+              label="Prototype mode · Sample data"
+            />
+            <StatusLabel
               tone="in_progress"
-              label={`[DEMO] ${demoState.xp} XP • ${demoState.streakDays}-day streak`}
+              label={`${demoState.xp} XP • ${demoState.streakDays}-day streak`}
             />
             <Link href="/employee/passport">
               <Button size="sm" variant="secondary">
@@ -174,7 +178,7 @@ export function ChallengesView() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
-              [DEMO] Interactive Multi-Choice Checks
+              Test Your Knowledge
             </p>
             <h2 className="font-editorial text-3xl text-ink">
               Sample Skill{" "}
@@ -183,7 +187,7 @@ export function ChallengesView() {
           </div>
           <StatusLabel
             tone="inferred"
-            label="Unlocks Demonstrated Evidence (Not Verified)"
+            label="Demonstrated Skill Evidence"
           />
         </div>
 
@@ -199,7 +203,7 @@ export function ChallengesView() {
                 description={
                   record
                     ? `Latest attempt: ${record.scorePct}% (${record.passed ? "Passed — Demonstrated badge active in Skill Passport" : "Try again to reach 75%"})`
-                    : `Pass with ${assessment.passingScore}%+ to unlock [DEMO] Demonstrated evidence on your Skill Passport and +${assessment.xpReward} Engagement XP.`
+                    : `Pass with ${assessment.passingScore}%+ to earn demonstrated evidence on your Skill Passport and +${assessment.xpReward} Engagement XP.`
                 }
                 illustration={<ClipboardCheck className="h-9 w-9 text-forest" />}
                 footer={
@@ -222,7 +226,7 @@ export function ChallengesView() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
-              [DEMO] Synced With Overview
+              Build Your Daily Momentum
             </p>
             <h2 className="font-editorial text-2xl text-ink">Daily Quests</h2>
           </div>
@@ -298,7 +302,7 @@ export function ChallengesView() {
                   <div className="flex items-center justify-between gap-2">
                     <StatusLabel
                       tone={done ? "verified" : "in_progress"}
-                      label={done ? "Submitted (Demo)" : ch.kind}
+                      label={done ? "Submitted" : ch.kind}
                     />
                     <span className="text-xs font-semibold text-muted">
                       {ch.difficulty} • {ch.minutes}m
@@ -331,7 +335,7 @@ export function ChallengesView() {
                       setSubmissionNote(demoState.challengeNotes[ch.id] ?? "");
                     }}
                   >
-                    {done ? "Review Demo Attempt" : "Open Challenge Brief"}
+                    {done ? "Review Submission" : "Open Challenge Brief"}
                   </Button>
                 </div>
               </Card>
@@ -353,7 +357,7 @@ export function ChallengesView() {
         open={Boolean(activeChallenge)}
         onClose={() => setActiveChallenge(null)}
         title={activeChallenge?.title || "Challenge Brief"}
-        description={`${activeChallenge?.skill ?? ""} • ${activeChallenge?.minutes ?? 0} mins (Demo Submission)`}
+        description={`${activeChallenge?.skill ?? ""} • ${activeChallenge?.minutes ?? 0} mins`}
         footer={
           <>
             <Button variant="ghost" onClick={() => setActiveChallenge(null)}>
@@ -372,7 +376,7 @@ export function ChallengesView() {
                 setActiveChallenge(null);
               }}
             >
-              Record Demo Attempt
+              Submit Solution Notes
             </Button>
           </>
         }
@@ -382,7 +386,7 @@ export function ChallengesView() {
             {activeChallenge?.prompt}
           </p>
           <Textarea
-            label="Architecture Notes or Solution Draft (Demo)"
+            label="Architecture Notes or Solution Draft"
             value={submissionNote}
             onChange={(e) => setSubmissionNote(e.target.value)}
             placeholder="Outline your query, constraints, or edge cases..."

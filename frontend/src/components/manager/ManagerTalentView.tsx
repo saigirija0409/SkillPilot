@@ -17,6 +17,7 @@ import {
   SAMPLE_PROJECT_PRESETS,
   useManagerDemo,
 } from "@/lib/demo/managerDemoStore";
+import { cleanDisplayText, formatEnumLabel } from "@/lib/formatters";
 
 export function ManagerTalentView() {
   const {
@@ -67,15 +68,18 @@ export function ManagerTalentView() {
         italicAccent="Talent Discovery"
         subtitle="Signature project-to-employee capability matching backed by the exact same shared requirements as Project Readiness."
         actions={
-          <Link href="/manager/projects">
-            <Button
-              size="sm"
-              variant="secondary"
-              rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
-            >
-              Edit Full Requirements
-            </Button>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusLabel tone="neutral" label="Prototype mode · Sample data" />
+            <Link href="/manager/projects">
+              <Button
+                size="sm"
+                variant="secondary"
+                rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
+              >
+                Edit Full Requirements
+              </Button>
+            </Link>
+          </div>
         }
       />
 
@@ -93,7 +97,7 @@ export function ManagerTalentView() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
-              Active Initiative: {managerState.projectName} (
+              Active Initiative: {cleanDisplayText(managerState.projectName)} (
               {managerState.projectTimeline})
             </p>
             <h2 className="font-editorial text-2xl text-ink">
@@ -180,32 +184,32 @@ export function ManagerTalentView() {
               </tr>
             </thead>
             <tbody>
-              {managerState.projectRequirements.map((req) => (
-                <tr key={req.id} className="border-b border-line/60">
-                  <td className="py-2.5 pr-4 font-semibold text-ink">
-                    {req.skill} (Target {req.requiredLevel}/5)
-                  </td>
-                  {comparedProfiles.map(({ emp }) => {
-                    const curr = emp.skills[req.skill] ?? 0;
-                    const ev = emp.evidenceStatus[req.skill] ?? "self_reported";
-                    return (
-                      <td key={`${emp.id}-${req.id}`} className="py-2.5 px-3">
-                        <span className="font-bold text-ink">{curr}/5</span>{" "}
-                        <span className="text-[11px] text-muted">
-                          ({ev})
-                        </span>
+                  {managerState.projectRequirements.map((req) => (
+                    <tr key={req.id} className="border-b border-line/60">
+                      <td className="py-2.5 pr-4 font-semibold text-ink">
+                        {req.skill} (Target {req.requiredLevel}/5)
                       </td>
-                    );
-                  })}
-                </tr>
-              ))}
+                      {comparedProfiles.map(({ emp }) => {
+                        const curr = emp.skills[req.skill] ?? 0;
+                        const ev = emp.evidenceStatus[req.skill] ?? "self_reported";
+                        return (
+                          <td key={`${emp.id}-${req.id}`} className="py-2.5 px-3">
+                            <span className="font-bold text-ink">{curr}/5</span>{" "}
+                            <span className="text-[11px] text-muted">
+                              ({formatEnumLabel(ev)})
+                            </span>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
             </tbody>
           </table>
         </Card>
       ) : null}
 
       {/* Employee Matching Cards */}
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
         {matchedProfiles.map(({ emp, overallPct, breakdown, matching, missing }) => {
           const isCompared = compareIds.includes(emp.id);
           return (
@@ -264,7 +268,7 @@ export function ManagerTalentView() {
                                   ? "in_progress"
                                   : "self_reported"
                             }
-                            label={ev}
+                            label={formatEnumLabel(ev)}
                           />
                           <span className="font-bold text-forest">
                             {Math.round(b.coverageRatio * 100)}%

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, ArrowRight, CheckCircle2, MinusCircle } from "lucide-react";
 
+import { useManagerOrganizationData } from "@/components/portal/ManagerPortalShell";
 import {
   Button,
   Card,
@@ -11,6 +12,7 @@ import {
   PastelCard,
   ProgressBar,
   Select,
+  SkeletonCard,
   StatusLabel,
 } from "@/components/ui";
 import {
@@ -32,6 +34,8 @@ const TARGET_BY_SKILL: Record<string, number> = {
 };
 
 export function ManagerHeatmapView() {
+  const { analytics, analyticsLoading, analyticsError, retryAnalytics } =
+    useManagerOrganizationData();
   const { employees } = useManagerDemo();
 
   const [deptFilter, setDeptFilter] = useState<string>("All");
@@ -40,6 +44,15 @@ export function ManagerHeatmapView() {
     dept: DepartmentName;
     skill: string;
   }>({ dept: "Data Science", skill: "Generative AI" });
+
+  if (analyticsLoading) {
+    return (
+      <div className="space-y-6">
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+    );
+  }
 
   const visibleDepartments = DEPARTMENTS.filter(
     (d) => deptFilter === "All" || d === deptFilter
@@ -73,33 +86,101 @@ export function ManagerHeatmapView() {
       t.departmentFocus === selectedCell.dept
   );
 
+  const hasLiveHeatmap = Boolean(analytics && analytics.skill_heatmap.length > 0);
+
   return (
     <div className="space-y-8">
       <EditorialHeading
         eyebrow="Organization • Skill Heatmap"
         title="Organizational"
         italicAccent="Skill Heatmap"
-        subtitle="Department-by-skill competency matrix combining color and explicit status markers so capability gaps stand out clearly without relying on color alone."
+        subtitle="Interactive department-by-skill matrix pairing accessible pastel indicators with explicit readiness markers and gap insights."
         actions={
-          <Link href="/manager/training">
-            <Button
-              size="sm"
-              variant="primary"
-              rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
-            >
-              Plan Cohort Training
-            </Button>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {!hasLiveHeatmap ? (
+              <StatusLabel tone="neutral" label="Prototype mode · Sample data" />
+            ) : null}
+            <Link href="/manager/training">
+              <Button
+                size="sm"
+                variant="primary"
+                rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
+              >
+                Plan Cohort Training
+              </Button>
+            </Link>
+          </div>
         }
       />
 
-      {/* Legend & Filters */}
+      {analyticsError ? (
+        <Card
+          padding="md"
+          className="border-[var(--status-attention-border)] bg-[var(--status-attention-bg)]"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--status-attention-text)]">
+            <span>
+              <strong>Heatmap API Error:</strong> {analyticsError}
+            </span>
+            <Button size="sm" variant="secondary" onClick={retryAnalytics}>
+              Retry
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
+      {/* Live Backend Org Skill Heatmap Section */}
+      {hasLiveHeatmap && analytics ? (
+        <Card padding="lg" className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+                Live FastAPI Organization Matrix ({analytics.team_size} members)
+              </p>
+              <h2 className="font-editorial text-2xl text-ink">
+                Live Team Skill Coverage
+              </h2>
+            </div>
+            <StatusLabel tone="verified" label="Live Backend Heatmap" />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {analytics.skill_heatmap.map((cell) => {
+              const met = cell.team_gap <= 0;
+              return (
+                <div
+                  key={cell.skill_name}
+                  className={`rounded-2xl border p-4 text-xs space-y-2 ${
+                    met
+                      ? "border-[#BDD3C1] bg-[#D9E8B5]/65"
+                      : cell.team_gap < 1.5
+                        ? "border-[#EBCD75] bg-[#F9DF91]/65"
+                        : "border-[#E3B29B] bg-[#F4C9B4]/65"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold text-ink">{cell.skill_name}</span>
+                    <span className="font-semibold text-ink">
+                      {met ? "Met ✓" : `Gap -${cell.team_gap}`}
+                    </span>
+                  </div>
+                  <p className="text-muted">
+                    Avg {cell.avg_proficiency}/5 • {cell.coverage_pct}% coverage
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      ) : null}
+
+      {/* Interactive Multi-Department Demo Matrix */}
       <Card padding="md" className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-wrap gap-4">
             <div className="w-48">
               <Select
-                label="Department Filter"
+                label="Department"
                 value={deptFilter}
                 onChange={(e) => setDeptFilter(e.target.value)}
               >
@@ -125,7 +206,6 @@ export function ManagerHeatmapView() {
             </div>
           </div>
 
-          {/* Non-color + pastel legend */}
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[#C5D89B] bg-[#D9E8B5] px-3 py-1 text-ink">
               <CheckCircle2 className="h-3.5 w-3.5 text-forest" />
@@ -143,9 +223,8 @@ export function ManagerHeatmapView() {
         </div>
       </Card>
 
-      {/* Matrix + Cell Inspector */}
       <div className="grid gap-6 lg:grid-cols-12">
-        <Card padding="md" className="lg:col-span-8 overflow-x-auto">
+        <Card padding="md" className="lg:col-span-8 xl:col-span-9 overflow-x-auto">
           <table className="w-full min-w-[600px] border-separate border-spacing-2 text-left text-xs">
             <thead>
               <tr>
@@ -218,8 +297,7 @@ export function ManagerHeatmapView() {
           </table>
         </Card>
 
-        {/* Cell Detail Inspector */}
-        <div className="space-y-5 lg:col-span-4">
+        <div className="space-y-5 lg:col-span-4 xl:col-span-3">
           <Card padding="lg" className="space-y-4">
             <div className="space-y-1">
               <StatusLabel
@@ -252,14 +330,14 @@ export function ManagerHeatmapView() {
               />
               <p className="text-xs text-muted">
                 {activeDetails.gap === 0
-                  ? "Department meets or exceeds target proficiency benchmark."
-                  : `Missing coverage: -${activeDetails.gap} proficiency levels below benchmark.`}
+                  ? "Department meets benchmark."
+                  : `Missing coverage: -${activeDetails.gap} levels below target.`}
               </p>
             </div>
 
             <div className="space-y-2">
               <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                Team Members ({activeDetails.members.length})
+                Department Members ({activeDetails.members.length})
               </p>
               {activeDetails.members.map((m) => (
                 <div
@@ -302,9 +380,9 @@ export function ManagerHeatmapView() {
 
           <PastelCard
             tone="lavender"
-            eyebrow="[DEMO] Matrix Transparency"
-            title="Accessible Status Coding"
-            description="Every cell pairs pastel tones with text tags and vector status symbols so priority gaps are unmistakable."
+            eyebrow="Accessible Design"
+            title="Explicit Status Symbols"
+            description="Pastel highlights always pair with ✓ / ~ / ! status markers and numerical ratios."
           />
         </div>
       </div>

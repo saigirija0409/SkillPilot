@@ -249,9 +249,9 @@ export function ManagerTrainingView() {
         <div className="space-y-5 lg:col-span-5">
           <PastelCard
             tone={overBudget || overHours ? "peach" : "pistachio"}
-            eyebrow="[DEMO PLANNER] Proposed Cohort Plan"
+            eyebrow="Prototype mode · Proposed Cohort Plan"
             title={`₹${totalEstimatedCostInr.toLocaleString("en-IN")} INR • ${totalDurationHrs} hrs`}
-            description={`${chosenActivities.length} activity(s) across ${participatingEmployees.length} employee(s). Deterministic preview until Phase 5 backend optimization.`}
+            description={`${chosenActivities.length} activity(s) across ${participatingEmployees.length} employee(s), balanced cleanly within your selected capacity.`}
             illustration={<CalendarRange className="h-9 w-9 text-forest" />}
           />
 

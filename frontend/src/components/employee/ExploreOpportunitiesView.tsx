@@ -6,6 +6,7 @@ import {
   Bookmark,
   Check,
   Clock,
+  ExternalLink,
   FolderPlus,
   HandCoins,
   RefreshCw,
@@ -31,7 +32,15 @@ import {
   SUPPLEMENTAL_DEMO_OPPORTUNITIES,
   useEmployeeDemo,
 } from "@/lib/demo/employeeDemoStore";
+import {
+  cleanDisplayText,
+  formatEnumLabel,
+  formatRecommendationAlgorithm,
+} from "@/lib/formatters";
+import { fetchMlRecommendationsApi } from "@/services/api";
+import { getCurrentSessionAccessToken } from "@/services/auth";
 import { fetchAllCatalogOpportunities } from "@/services/profile";
+import type { RecommendedOpportunityDto } from "@/types/api";
 import type { Opportunity } from "@/types/database";
 
 const OPPORTUNITY_TYPES = [
@@ -39,16 +48,21 @@ const OPPORTUNITY_TYPES = [
   "course",
   "workshop",
   "hackathon",
-  "competition",
-  "open_source",
-  "internal",
   "certification",
+  "open_source",
+  "internal_training",
   "mentoring",
 ];
 
 const DIFFICULTY_LEVELS = ["all", "beginner", "intermediate", "advanced"];
-
 const SHELF_TONES = ["pistachio", "butter", "peach", "lavender"] as const;
+
+function isNotExpired(deadlineAt?: string | null): boolean {
+  if (!deadlineAt) return true;
+  const parsed = Date.parse(deadlineAt);
+  if (Number.isNaN(parsed)) return true;
+  return parsed >= Date.now();
+}
 
 export function ExploreOpportunitiesView() {
   const { state: demoState, toggleSavedOpportunity, addOpportunityToRoadmap } =
@@ -57,7 +71,11 @@ export function ExploreOpportunitiesView() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mlError, setMlError] = useState<string | null>(null);
+  const [mlAlgorithm, setMlAlgorithm] = useState<string>("none");
+  const [mlRecs, setMlRecs] = useState<RecommendedOpportunityDto[]>([]);
   const [items, setItems] = useState<Opportunity[]>([]);
+
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [difficultyFilter, setDifficultyFilter] = useState("all");
@@ -70,67 +88,96 @@ export function ExploreOpportunitiesView() {
   function handleRetry() {
     setLoading(true);
     setError(null);
+    setMlError(null);
     setReloadKey((k) => k + 1);
   }
 
   useEffect(() => {
     let active = true;
-    fetchAllCatalogOpportunities(50)
-      .then((data) => {
-        if (!active) return;
-        setItems([...data, ...SUPPLEMENTAL_DEMO_OPPORTUNITIES]);
-        setError(null);
-      })
-      .catch((err) => {
-        if (!active) return;
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to load learning opportunities."
+
+    async function load() {
+      const token = await getCurrentSessionAccessToken();
+      const [catalogRes, mlRes] = await Promise.allSettled([
+        fetchAllCatalogOpportunities(50),
+        token
+          ? fetchMlRecommendationsApi(token, { limit: 20 })
+          : Promise.reject(new Error("Missing session token for ML ranking")),
+      ]);
+
+      if (!active) return;
+
+      if (catalogRes.status === "fulfilled") {
+        const liveValid = catalogRes.value.filter((o) =>
+          isNotExpired(o.deadline_at)
         );
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+        setItems([...liveValid, ...SUPPLEMENTAL_DEMO_OPPORTUNITIES]);
+        setError(null);
+      } else {
+        setError(
+          catalogRes.reason instanceof Error
+            ? catalogRes.reason.message
+            : "Failed to load Supabase opportunities."
+        );
+      }
+
+      if (mlRes.status === "fulfilled") {
+        setMlRecs(mlRes.value.recommendations);
+        setMlAlgorithm(mlRes.value.algorithm);
+        setMlError(null);
+      } else {
+        setMlRecs([]);
+        setMlAlgorithm("error");
+        setMlError(
+          mlRes.reason instanceof Error
+            ? mlRes.reason.message
+            : "ML recommendation engine failed."
+        );
+      }
+    }
+
+    void load().finally(() => {
+      if (active) setLoading(false);
+    });
 
     return () => {
       active = false;
     };
   }, [reloadKey]);
 
-  const filtered = items.filter((item) => {
-    if (savedOnly && !demoState.savedOpportunityIds.includes(item.id)) {
-      return false;
-    }
-    if (typeFilter !== "all" && item.opportunity_type !== typeFilter) {
-      return false;
-    }
-    if (
-      difficultyFilter !== "all" &&
-      item.difficulty_level.toLowerCase() !== difficultyFilter
-    ) {
-      return false;
-    }
-    if (item.cost_inr > maxBudgetInr) {
-      return false;
-    }
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      item.title.toLowerCase().includes(q) ||
-      item.description.toLowerCase().includes(q) ||
-      item.provider.toLowerCase().includes(q) ||
-      item.skill_tags.some((tag) => tag.toLowerCase().includes(q))
-    );
-  });
+  const mlScoreById = new Map<string, RecommendedOpportunityDto>();
+  mlRecs.forEach((r) => mlScoreById.set(r.opportunity_id, r));
 
-  const featuredCollections = [
-    items.find((i) => i.opportunity_type === "hackathon") ?? items[0],
-    items.find((i) => i.cost_inr === 0 && i.opportunity_type !== "hackathon") ??
-      items[1],
-    items.find((i) => i.opportunity_type === "open_source") ?? items[2],
-    items.find((i) => i.opportunity_type === "internal") ?? items[3],
-  ].filter((x): x is Opportunity => Boolean(x));
+  const filtered = items
+    .filter((item) => {
+      if (savedOnly && !demoState.savedOpportunityIds.includes(item.id)) {
+        return false;
+      }
+      if (typeFilter !== "all" && item.opportunity_type !== typeFilter) {
+        return false;
+      }
+      if (
+        difficultyFilter !== "all" &&
+        item.difficulty_level.toLowerCase() !== difficultyFilter
+      ) {
+        return false;
+      }
+      if (item.cost_inr > maxBudgetInr) {
+        return false;
+      }
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        item.title.toLowerCase().includes(q) ||
+        item.description.toLowerCase().includes(q) ||
+        item.provider.toLowerCase().includes(q) ||
+        item.skill_tags.some((tag) => tag.toLowerCase().includes(q))
+      );
+    })
+    .sort((a, b) => {
+      const scoreA = mlScoreById.get(a.id)?.relevance_score ?? -1;
+      const scoreB = mlScoreById.get(b.id)?.relevance_score ?? -1;
+      return scoreB - scoreA;
+    });
 
   if (loading) {
     return (
@@ -167,12 +214,20 @@ export function ExploreOpportunitiesView() {
   return (
     <div className="space-y-9">
       <EditorialHeading
-        eyebrow="Workspace • Editorial Discovery"
+        eyebrow="Workspace • ML Opportunity Discovery"
         title="Curated"
         italicAccent="Opportunities"
-        subtitle="Explore Supabase catalog courses alongside clearly labelled [DEMO] hackathons, competitions, open-source sprints, and internal workshops."
+        subtitle="Personalized learning opportunities ranked for your skill gaps alongside curated sample sprints."
         actions={
           <div className="flex flex-wrap items-center gap-2.5">
+            <StatusLabel
+              tone={mlError ? "attention" : "verified"}
+              label={
+                mlError
+                  ? "Recommendations Unavailable"
+                  : `Ranking: ${formatRecommendationAlgorithm(mlAlgorithm)}`
+              }
+            />
             <Button
               size="sm"
               variant={savedOnly ? "primary" : "secondary"}
@@ -181,48 +236,70 @@ export function ExploreOpportunitiesView() {
             >
               Saved ({demoState.savedOpportunityIds.length})
             </Button>
-            <Link href="/employee/roadmap">
-              <Button size="sm" variant="ghost">
-                Open Roadmap
-              </Button>
-            </Link>
           </div>
         }
       />
 
-      {/* Spotify-inspired Editorial Discovery Collections */}
-      {!savedOnly && query.trim() === "" && typeFilter === "all" ? (
+      {mlError ? (
+        <Card
+          padding="md"
+          className="border-[var(--status-attention-border)] bg-[var(--status-attention-bg)]"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--status-attention-text)]">
+            <span>
+              <strong>ML Recommendation API Notice:</strong> {mlError}. Showing
+              unranked Supabase catalog items.
+            </span>
+            <Button size="sm" variant="secondary" onClick={handleRetry}>
+              Retry ML Ranking
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
+      {/* Top ML Ranked Editorial Shelf */}
+      {!savedOnly &&
+      query.trim() === "" &&
+      typeFilter === "all" &&
+      mlRecs.length > 0 ? (
         <section className="space-y-4">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-editorial text-2xl text-ink">
-              Editorial <span className="italic text-forest">Collections</span>
+              Top <span className="italic text-forest">ML Matches</span> for
+              Your Gaps
             </h2>
             <span className="text-xs font-semibold text-muted">
-              Sample collections • Phase 3 adds hybrid ML ranking
+              Personalized using {formatRecommendationAlgorithm(mlAlgorithm).toLowerCase()}
             </span>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredCollections.map((item, idx) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSelectedOpp(item)}
-                className="text-left cursor-pointer"
-              >
-                <PastelCard
-                  tone={SHELF_TONES[idx % SHELF_TONES.length]}
-                  eyebrow={item.opportunity_type.replace("_", " ")}
-                  title={item.title}
-                  description={`${item.estimated_hours} hrs • ${
-                    item.cost_inr === 0
-                      ? "Free (₹0)"
-                      : `₹${item.cost_inr.toLocaleString("en-IN")} INR`
-                  }`}
-                  className="h-full transition hover:-translate-y-0.5"
-                />
-              </button>
-            ))}
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            {mlRecs.slice(0, 4).map((rec, idx) => {
+              const matchedOpp = items.find((i) => i.id === rec.opportunity_id);
+              const pct = Math.round(rec.relevance_score * 100);
+              return (
+                <button
+                  key={rec.opportunity_id}
+                  type="button"
+                  onClick={() => {
+                    if (matchedOpp) setSelectedOpp(matchedOpp);
+                  }}
+                  className="text-left cursor-pointer"
+                >
+                  <PastelCard
+                    tone={SHELF_TONES[idx % SHELF_TONES.length]}
+                    eyebrow={`${pct}% Match • ${formatEnumLabel(rec.opportunity_type)}`}
+                    title={cleanDisplayText(rec.title)}
+                    description={`${cleanDisplayText(rec.match_reason)} • ${
+                      rec.cost_inr === 0
+                        ? "Free (₹0)"
+                        : `₹${rec.cost_inr.toLocaleString("en-IN")} INR`
+                    }`}
+                    className="h-full transition hover:-translate-y-0.5"
+                  />
+                </button>
+              );
+            })}
           </div>
         </section>
       ) : null}
@@ -235,7 +312,7 @@ export function ExploreOpportunitiesView() {
               label="Search Title, Provider, or Skill"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g., sql, hackathon, internal..."
+              placeholder="e.g., sql, fastapi, docker..."
             />
           </div>
 
@@ -247,7 +324,7 @@ export function ExploreOpportunitiesView() {
             >
               {OPPORTUNITY_TYPES.map((t) => (
                 <option key={t} value={t}>
-                  {t === "all" ? "All Formats" : t.replace("_", " ")}
+                  {t === "all" ? "All Formats" : formatEnumLabel(t)}
                 </option>
               ))}
             </Select>
@@ -261,7 +338,7 @@ export function ExploreOpportunitiesView() {
             >
               {DIFFICULTY_LEVELS.map((lvl) => (
                 <option key={lvl} value={lvl}>
-                  {lvl === "all" ? "All Levels" : lvl}
+                  {lvl === "all" ? "All Levels" : formatEnumLabel(lvl)}
                 </option>
               ))}
             </Select>
@@ -289,8 +366,8 @@ export function ExploreOpportunitiesView() {
 
       {filtered.length === 0 ? (
         <EmptyState
-          title="No opportunities match those filters"
-          description="Try resetting your category, difficulty, or INR budget filter."
+          title="No active opportunities match those filters"
+          description="Expired events are automatically excluded. Try resetting filters or raising your INR budget."
           action={
             <Button
               size="sm"
@@ -308,12 +385,11 @@ export function ExploreOpportunitiesView() {
           }
         />
       ) : (
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((opp) => {
             const bookmarked = demoState.savedOpportunityIds.includes(opp.id);
-            const onRoadmap = demoState.roadmapItems.some(
-              (r) => r.sourceOpportunityId === opp.id
-            );
+            const mlMatch = mlScoreById.get(opp.id);
+
             return (
               <Card
                 key={opp.id}
@@ -325,25 +401,37 @@ export function ExploreOpportunitiesView() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       <StatusLabel
                         tone="inferred"
-                        label={opp.opportunity_type.replace("_", " ")}
+                        label={formatEnumLabel(opp.opportunity_type)}
                       />
-                      <StatusLabel tone="neutral" label={opp.difficulty_level} />
+                      {mlMatch ? (
+                        <StatusLabel
+                          tone="verified"
+                          label={`${Math.round(mlMatch.relevance_score * 100)}% Match`}
+                        />
+                      ) : null}
                     </div>
-                    <StatusLabel
-                      tone={opp.is_demo ? "in_progress" : "verified"}
-                      label={opp.is_demo ? "[DEMO] Sample" : "Supabase Catalog"}
-                    />
+                    {opp.is_demo ? (
+                      <StatusLabel tone="neutral" label="Sample Opportunity" />
+                    ) : null}
                   </div>
 
-                  <h2 className="font-editorial text-2xl leading-snug text-ink">
-                    {opp.title}
+                  <h2 className="font-editorial text-2xl leading-snug text-ink line-clamp-2">
+                    {cleanDisplayText(opp.title)}
                   </h2>
                   <p className="text-xs font-semibold text-forest">
-                    {opp.provider} • {opp.format}
+                    {cleanDisplayText(opp.provider)} •{" "}
+                    {formatEnumLabel(opp.format)}
                   </p>
-                  <p className="text-sm leading-relaxed text-muted">
-                    {opp.description}
+                  <p className="text-sm leading-relaxed text-muted line-clamp-3">
+                    {cleanDisplayText(opp.description)}
                   </p>
+
+                  {mlMatch ? (
+                    <p className="rounded-xl border border-line bg-canvas px-3 py-2 text-xs text-ink">
+                      <strong>Relevance:</strong>{" "}
+                      {cleanDisplayText(mlMatch.match_reason)}
+                    </p>
+                  ) : null}
 
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {opp.skill_tags.map((tag) => (
@@ -363,6 +451,16 @@ export function ExploreOpportunitiesView() {
                         ? "Free (₹0)"
                         : `₹${opp.cost_inr.toLocaleString("en-IN")} INR`}
                     </span>
+                    {opp.url ? (
+                      <a
+                        href={opp.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-forest underline"
+                      >
+                        Link <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ) : null}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -370,25 +468,16 @@ export function ExploreOpportunitiesView() {
                       size="sm"
                       variant={bookmarked ? "pastel" : "ghost"}
                       leftIcon={<Bookmark className="h-3.5 w-3.5" />}
-                      onClick={() => {
-                        toggleSavedOpportunity(opp.id);
-                        pushToast({
-                          tone: bookmarked ? "info" : "success",
-                          title: bookmarked
-                            ? "Removed from Saved"
-                            : "Saved Opportunity",
-                          description: "Available directly inside My Roadmap.",
-                        });
-                      }}
+                      onClick={() => toggleSavedOpportunity(opp.id)}
                     >
                       {bookmarked ? "Saved" : "Save"}
                     </Button>
                     <Button
                       size="sm"
-                      variant={onRoadmap ? "pastel" : "secondary"}
+                      variant="secondary"
                       onClick={() => setSelectedOpp(opp)}
                     >
-                      {onRoadmap ? "Inspect (On Plan)" : "Inspect"}
+                      Inspect
                     </Button>
                   </div>
                 </div>
@@ -398,12 +487,11 @@ export function ExploreOpportunitiesView() {
         </div>
       )}
 
-      {/* Opportunity Detail Drawer */}
       <Drawer
         open={Boolean(selectedOpp)}
         onClose={() => setSelectedOpp(null)}
-        title={selectedOpp?.title || "Opportunity Detail"}
-        description={`${selectedOpp?.provider ?? ""} • ${selectedOpp?.format ?? ""}`}
+        title={cleanDisplayText(selectedOpp?.title) || "Opportunity Detail"}
+        description={`${cleanDisplayText(selectedOpp?.provider)} • ${formatEnumLabel(selectedOpp?.format)}`}
         footer={
           selectedOpp ? (
             <div className="flex w-full flex-wrap items-center justify-between gap-2">
@@ -427,36 +515,61 @@ export function ExploreOpportunitiesView() {
           <div className="space-y-5">
             <PastelCard
               tone="lavender"
-              eyebrow={
-                selectedOpp.is_demo
-                  ? "[DEMO] Sample Record"
-                  : "Supabase Catalog Record"
-              }
-              title={selectedOpp.difficulty_level}
-              description={selectedOpp.description}
+              eyebrow={selectedOpp.is_demo ? "Sample Opportunity" : "Verified Opportunity"}
+              title={formatEnumLabel(selectedOpp.difficulty_level)}
+              description={cleanDisplayText(selectedOpp.description)}
             />
+
+            {mlScoreById.get(selectedOpp.id) ? (
+              <div className="rounded-2xl border border-[#C5D89B] bg-[#D9E8B5]/40 p-4 text-xs space-y-1">
+                <p className="font-bold text-ink">
+                  Match Relevance:{" "}
+                  {Math.round(
+                    (mlScoreById.get(selectedOpp.id)?.relevance_score ?? 0) *
+                      100
+                  )}
+                  % ({formatRecommendationAlgorithm(mlAlgorithm)})
+                </p>
+                <p className="text-muted">
+                  {cleanDisplayText(mlScoreById.get(selectedOpp.id)?.match_reason)}
+                </p>
+              </div>
+            ) : null}
 
             <div className="rounded-2xl border border-line bg-canvas p-4 space-y-2 text-xs text-ink">
               <p className="flex items-center gap-2 font-bold">
                 <Search className="h-4 w-4 text-forest" />
-                Effort &amp; INR Feasibility
+                Effort, Budget &amp; Source
               </p>
               <p className="text-muted leading-relaxed">
-                Estimated effort: <strong>{selectedOpp.estimated_hours} hrs</strong>{" "}
-                • Fee:{" "}
+                Effort: <strong>{selectedOpp.estimated_hours} hrs</strong> •
+                Fee:{" "}
                 <strong>
                   {selectedOpp.cost_inr === 0
                     ? "Free (₹0 INR)"
                     : `₹${selectedOpp.cost_inr.toLocaleString("en-IN")} INR`}
                 </strong>
-                . No live seat availability is fabricated; external catalog ranking
-                connects in Phase 3.
               </p>
+              {selectedOpp.url ? (
+                <a
+                  href={selectedOpp.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 font-semibold text-forest underline"
+                >
+                  Open Genuine Source Link{" "}
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ) : (
+                <p className="text-muted">
+                  No external URL attached to this catalog record.
+                </p>
+              )}
             </div>
 
             <div className="space-y-3 rounded-2xl border border-line bg-surface p-4">
               <p className="text-xs font-bold uppercase tracking-wider text-muted">
-                Add to Demonstration Roadmap
+                Queue into Roadmap Simulator
               </p>
               <div className="flex flex-wrap gap-2">
                 {([30, 60, 90] as const).map((horizon) => (
@@ -491,26 +604,20 @@ export function ExploreOpportunitiesView() {
                     pushToast({
                       tone: added ? "success" : "info",
                       title: added
-                        ? `Added to Day ${targetBucket} Roadmap (+15 XP)`
+                        ? `Queued on Day ${targetBucket} (+15 XP)`
                         : "Already queued on your Roadmap",
-                      description: selectedOpp.title,
+                      description: cleanDisplayText(selectedOpp.title),
                     });
                   }}
                 >
-                  {demoState.roadmapItems.some(
-                    (r) => r.sourceOpportunityId === selectedOpp.id
-                  )
-                    ? "Already on Roadmap"
-                    : `Add to Day ${targetBucket} Plan`}
+                  Add to Day {targetBucket} Plan
                 </Button>
 
                 <Button
                   size="sm"
                   variant="ghost"
                   leftIcon={<Sparkles className="h-3.5 w-3.5" />}
-                  onClick={() => {
-                    toggleSavedOpportunity(selectedOpp.id);
-                  }}
+                  onClick={() => toggleSavedOpportunity(selectedOpp.id)}
                 >
                   {demoState.savedOpportunityIds.includes(selectedOpp.id)
                     ? "Remove Bookmark"

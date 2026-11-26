@@ -16,8 +16,15 @@ import {
   useEmployeeDemo,
   type DemoCopilotMessage,
 } from "@/lib/demo/employeeDemoStore";
-import { fetchBackendHealth } from "@/services/api";
+import {
+  fetchBackendHealth,
+  fetchMlRecommendationsApi,
+  fetchSkillGapApi,
+  listMyRoadmapsApi,
+} from "@/services/api";
+import { getCurrentSessionAccessToken } from "@/services/auth";
 import { fetchUserProfileBundle } from "@/services/profile";
+import type { RecommendedOpportunityDto, SkillGapResponseDto } from "@/types/api";
 import type { LearningPreferences, Profile, UserSkill } from "@/types/database";
 
 interface CopilotViewProps {
@@ -38,6 +45,9 @@ export function CopilotView({ userId }: CopilotViewProps) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [skills, setSkills] = useState<UserSkill[]>([]);
   const [prefs, setPrefs] = useState<LearningPreferences | null>(null);
+  const [gapData, setGapData] = useState<SkillGapResponseDto | null>(null);
+  const [mlTopRecs, setMlTopRecs] = useState<RecommendedOpportunityDto[]>([]);
+  const [roadmapCount, setRoadmapCount] = useState<number>(0);
   const [backendStatusLabel, setBackendStatusLabel] = useState<string>(
     "Checking FastAPI..."
   );
@@ -45,30 +55,49 @@ export function CopilotView({ userId }: CopilotViewProps) {
   useEffect(() => {
     let active = true;
 
-    Promise.allSettled([fetchUserProfileBundle(userId), fetchBackendHealth()])
-      .then(([bundleRes, healthRes]) => {
+    async function loadContext() {
+      const [bundleRes, healthRes, token] = await Promise.all([
+        fetchUserProfileBundle(userId).catch(() => null),
+        fetchBackendHealth().catch(() => null),
+        getCurrentSessionAccessToken().catch(() => null),
+      ]);
+      if (!active) return;
+
+      if (bundleRes) {
+        setProfile(bundleRes.profile);
+        setSkills(bundleRes.userSkills);
+        setPrefs(bundleRes.preferences);
+      }
+
+      if (healthRes) {
+        const geminiConfigured = Boolean(
+          healthRes.integrations?.gemini?.configured
+        );
+        setBackendStatusLabel(
+          geminiConfigured
+            ? "Prototype mode · Sample responses (Live context synced)"
+            : "Prototype mode · Sample responses"
+        );
+      } else {
+        setBackendStatusLabel("Prototype mode · Sample data");
+      }
+
+      if (token) {
+        const [gapRes, mlRes, rmRes] = await Promise.allSettled([
+          bundleRes?.profile?.target_role_id
+            ? fetchSkillGapApi(bundleRes.profile.target_role_id, token)
+            : Promise.reject(new Error("No role")),
+          fetchMlRecommendationsApi(token, { limit: 3 }),
+          listMyRoadmapsApi(token),
+        ]);
         if (!active) return;
+        if (gapRes.status === "fulfilled") setGapData(gapRes.value);
+        if (mlRes.status === "fulfilled") setMlTopRecs(mlRes.value.recommendations);
+        if (rmRes.status === "fulfilled") setRoadmapCount(rmRes.value.length);
+      }
+    }
 
-        if (bundleRes.status === "fulfilled") {
-          setProfile(bundleRes.value.profile);
-          setSkills(bundleRes.value.userSkills);
-          setPrefs(bundleRes.value.preferences);
-        }
-
-        if (healthRes.status === "fulfilled") {
-          const geminiConfigured = Boolean(
-            healthRes.value.integrations?.gemini?.configured
-          );
-          setBackendStatusLabel(
-            geminiConfigured
-              ? "FastAPI Healthy • Agentic Chat Connect Pending Phase 5"
-              : "FastAPI Healthy • Demo Preview Active"
-          );
-        } else {
-          setBackendStatusLabel("Backend Offline • Demo Preview Active");
-        }
-      });
-
+    void loadContext();
     return () => {
       active = false;
     };
@@ -80,25 +109,28 @@ export function CopilotView({ userId }: CopilotViewProps) {
 
     const targetRole = profile?.target_role_name || "your target role";
     const budgetCap = prefs?.budget_inr ?? demoState.budgetInrSim;
-    const incompleteCount = demoState.roadmapItems.filter(
-      (r) => !r.completed
-    ).length;
+    const missingLabel =
+      gapData?.top_missing_skills.slice(0, 3).join(", ") ||
+      "core role requirements";
+    const topRecLabel = mlTopRecs[0]
+      ? `${mlTopRecs[0].title} (${Math.round(mlTopRecs[0].relevance_score * 100)}% ML match)`
+      : "Catalog matches";
 
     const lower = trimmed.toLowerCase();
-    let replyText = `[DEMO PREVIEW] Based on your live profile (${profile?.full_name || "Learner"} → ${targetRole}) and ₹${budgetCap.toLocaleString("en-IN")} INR cap, start by inspecting priority gaps in Skill Constellation and picking 1 free/budget-fit module for your ${incompleteCount} open roadmap milestones. Live Gemini tool calling connects in Phase 5.`;
+    let replyText = `Based on your active profile (${targetRole}, ${gapData ? `${Math.round(gapData.overall_readiness_score)}% readiness` : `${skills.length} skills`}), prioritize closing ${missingLabel}. Your strongest catalog match right now is ${topRecLabel}. (Sample assistant guidance)`;
     let suggestedLinks: Array<{ label: string; href: string }> = [
       { label: "Open Skill Constellation", href: "/employee/skills" },
       { label: "Inspect Roadmap", href: "/employee/roadmap" },
     ];
 
     if (lower.includes("free") || lower.includes("budget") || lower.includes("inr")) {
-      replyText = `[DEMO PREVIEW] You have ${demoState.savedOpportunityIds.length} saved opportunities and a simulator cap of ₹${demoState.budgetInrSim.toLocaleString("en-IN")} INR (${prefs ? `saved profile budget ₹${prefs.budget_inr.toLocaleString("en-IN")}` : "demo preference"}). Filter Explore Opportunities to ₹0–₹${budgetCap.toLocaleString("en-IN")} INR or submit a Sponsorship brief for higher-cost certifications.`;
+      replyText = `You have ${demoState.savedOpportunityIds.length} saved opportunities and a simulated budget cap of ₹${demoState.budgetInrSim.toLocaleString("en-IN")} INR (${prefs ? `saved profile budget ₹${prefs.budget_inr.toLocaleString("en-IN")}` : "local preference"}). Filter Explore Opportunities to ₹0–₹${budgetCap.toLocaleString("en-IN")} INR or submit a Sponsorship brief for higher-cost certifications. (Sample assistant guidance)`;
       suggestedLinks = [
         { label: "Filter Explorer by INR", href: "/employee/explore" },
         { label: "Open Sponsorship", href: "/employee/sponsorship" },
       ];
     } else if (lower.includes("sponsor")) {
-      replyText = `[DEMO PREVIEW] Tie your sponsorship request directly to a target skill gap for ${targetRole} and include expected project deliverables within 60 days. Your current session tracks ${demoState.sponsorshipRequests.length} demo request(s).`;
+      replyText = `Tie your sponsorship request directly to a target skill gap for ${targetRole} and include expected project deliverables within 60 days. Your session currently tracks ${demoState.sponsorshipRequests.length} request(s). (Sample assistant guidance)`;
       suggestedLinks = [
         { label: "Draft Sponsorship Request", href: "/employee/sponsorship" },
       ];
@@ -130,18 +162,18 @@ export function CopilotView({ userId }: CopilotViewProps) {
         eyebrow="Support • Career Copilot"
         title="Agentic"
         italicAccent="Career Copilot"
-        subtitle="Context-aware assistant preview grounded in your Supabase baseline and demo roadmap. Live Gemini function calling arrives in Phase 5."
-        actions={<StatusLabel tone="in_progress" label={backendStatusLabel} />}
+        subtitle="Interactive guidance grounded in your current skills, target role benchmarks, and INR budget preferences."
+        actions={<StatusLabel tone="neutral" label={backendStatusLabel} />}
       />
 
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Career Context & Prompts Sidebar */}
-        <div className="space-y-5 lg:col-span-4">
+        <div className="space-y-5 lg:col-span-4 xl:col-span-3">
           <PastelCard
             tone="lavender"
-            eyebrow="Grounded Career Context"
+            eyebrow="Grounded Backend Context"
             title={profile?.target_role_name || "Target Role Pending"}
-            description={`${skills.length} skills in Supabase • ₹${(prefs?.budget_inr ?? demoState.budgetInrSim).toLocaleString("en-IN")} INR cap • ${demoState.roadmapItems.filter((i) => !i.completed).length} active demo milestones.`}
+            description={`${gapData ? `${Math.round(gapData.overall_readiness_score)}% readiness` : `${skills.length} skills`} • ₹${(prefs?.budget_inr ?? demoState.budgetInrSim).toLocaleString("en-IN")} INR cap • ${roadmapCount} saved AI roadmap(s).`}
             illustration={<Bot className="h-9 w-9 text-forest" />}
           />
 
@@ -163,8 +195,8 @@ export function CopilotView({ userId }: CopilotViewProps) {
         </div>
 
         {/* Conversation Thread */}
-        <Card padding="lg" className="flex flex-col justify-between lg:col-span-8">
-          <div className="max-h-[440px] space-y-4 overflow-y-auto pr-1">
+        <Card padding="lg" className="flex flex-col justify-between lg:col-span-8 xl:col-span-9">
+          <div className="max-h-[540px] space-y-4 overflow-y-auto pr-1">
             {demoState.copilotMessages.map((msg) => (
               <div
                 key={msg.id}
@@ -217,7 +249,7 @@ export function CopilotView({ userId }: CopilotViewProps) {
           >
             <div className="flex-1">
               <Input
-                label="Ask Career Copilot ([DEMO] Preview)"
+                label="Ask Career Copilot"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about skill gaps, INR budgets, or your next 30-day step..."

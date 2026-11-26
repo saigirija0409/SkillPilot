@@ -221,9 +221,9 @@ export function ManagerBudgetView() {
         <div className="space-y-6 lg:col-span-6">
           <PastelCard
             tone="butter"
-            eyebrow="[DEMO SIMULATOR] Hard-Cap Allocation"
+            eyebrow="Prototype mode · Hard-Cap Allocation"
             title={`${allocatedCohorts.length} Eligible Learning Activities`}
-            description={`Proposed cohort spend: ₹${runningSpend.toLocaleString("en-IN")} INR • Remaining after plan: ₹${finalRemainingAfterSim.toLocaleString("en-IN")} INR. Never invents financial ROI metrics.`}
+            description={`Proposed cohort spend: ₹${runningSpend.toLocaleString("en-IN")} INR • Remaining after plan: ₹${finalRemainingAfterSim.toLocaleString("en-IN")} INR.`}
             illustration={<Calculator className="h-9 w-9 text-forest" />}
           >
             <ProgressBar

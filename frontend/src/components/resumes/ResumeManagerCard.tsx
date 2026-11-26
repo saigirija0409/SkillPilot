@@ -1,33 +1,100 @@
 "use client";
 
 import React, { useState } from "react";
-import { ExternalLink, FileText, Lock, Trash2, UploadCloud } from "lucide-react";
+import {
+  CheckCircle2,
+  ExternalLink,
+  FileText,
+  Lock,
+  Sparkles,
+  Trash2,
+  UploadCloud,
+} from "lucide-react";
 
-import { Button, StatusLabel } from "@/components/ui";
+import { Button, SkillChip, StatusLabel, Textarea } from "@/components/ui";
+import {
+  extractSkillsFromTextApi,
+  uploadAndParseResumeApi,
+} from "@/services/api";
+import { getCurrentSessionAccessToken } from "@/services/auth";
+import {
+  fetchCatalogData,
+  fetchUserProfileBundle,
+  saveInferredSkillsFromCatalog,
+} from "@/services/profile";
 import {
   createResumeSignedUrl,
   deletePrivateResume,
-  uploadPrivateResume,
   validatePdfResumeFile,
 } from "@/services/resumes";
-import type { ResumeRecord } from "@/types/database";
+import type { ExtractedSkillDto } from "@/types/api";
+import type { ResumeRecord, Skill } from "@/types/database";
 
 interface ResumeManagerCardProps {
   userId: string;
   resumes: ResumeRecord[];
   onResumesChanged: (nextResumes: ResumeRecord[]) => void;
+  onSkillsSaved?: () => void;
+  targetRoleHint?: string | null;
 }
 
 export function ResumeManagerCard({
   userId,
   resumes,
   onResumesChanged,
+  onSkillsSaved,
+  targetRoleHint,
 }: ResumeManagerCardProps) {
   const [uploading, setUploading] = useState(false);
+  const [extractingText, setExtractingText] = useState(false);
+  const [savingMatched, setSavingMatched] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  const [showTextExtractor, setShowTextExtractor] = useState(false);
+  const [resumeText, setResumeText] = useState("");
+  const [extractedSkills, setExtractedSkills] = useState<ExtractedSkillDto[]>(
+    []
+  );
+  const [parsedSummary, setParsedSummary] = useState<string>("");
+  const [matchedCatalogSkills, setMatchedCatalogSkills] = useState<
+    Array<{ skill: Skill; proficiency: number; confidence: number }>
+  >([]);
+
+  async function matchExtractedSkillsToCatalog(
+    extracted: ExtractedSkillDto[]
+  ) {
+    const catalog = await fetchCatalogData();
+    const matched: Array<{
+      skill: Skill;
+      proficiency: number;
+      confidence: number;
+    }> = [];
+    const seen = new Set<string>();
+
+    for (const item of extracted) {
+      const lower = item.name.trim().toLowerCase();
+      const found = catalog.skills.find(
+        (s) =>
+          s.name.toLowerCase() === lower ||
+          s.slug.toLowerCase() === lower ||
+          s.name.toLowerCase().includes(lower) ||
+          lower.includes(s.name.toLowerCase())
+      );
+      if (found && !seen.has(found.id)) {
+        seen.add(found.id);
+        matched.push({
+          skill: found,
+          proficiency: item.proficiency,
+          confidence: item.confidence,
+        });
+      }
+    }
+
+    setMatchedCatalogSkills(matched);
+  }
 
   async function processFile(file: File | undefined) {
     if (!file) return;
@@ -44,19 +111,119 @@ export function ResumeManagerCard({
     setStatusMessage(null);
 
     try {
-      const created = await uploadPrivateResume(userId, file);
-      const updatedList = [
-        created,
-        ...resumes.map((r) => ({ ...r, is_active: false })),
-      ];
-      onResumesChanged(updatedList);
-      setStatusMessage(
-        `Uploaded "${created.file_name}" to private user-scoped storage.`
-      );
+      const token = await getCurrentSessionAccessToken();
+      if (!token) {
+        throw new Error("Active session expired. Sign in again to upload.");
+      }
+
+      // Prefix file name so repeated uploads of the same filename do not hit the
+      // PostgreSQL UNIQUE constraint on resumes.storage_path.
+      const uniquePrefix =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID().slice(0, 8)
+          : String(Date.now());
+      const uniqueFile = new File([file], `${uniquePrefix}-${file.name}`, {
+        type: file.type || "application/pdf",
+      });
+
+      const parsed = await uploadAndParseResumeApi(uniqueFile, token);
+      setExtractedSkills(parsed.skills);
+      setParsedSummary(parsed.summary || "");
+      await matchExtractedSkillsToCatalog(parsed.skills);
+
+      const bundle = await fetchUserProfileBundle(userId);
+      onResumesChanged(bundle.resumes);
+
+      if (parsed.skills.length === 0) {
+        setError(
+          `Uploaded "${file.name}" securely, but AI skill extraction returned 0 skills (Gemini AI may be unavailable or returned no structured matches). Your PDF is safely stored.`
+        );
+      } else {
+        setStatusMessage(
+          `Uploaded and parsed "${file.name}" (${parsed.skills.length} skills extracted from ${parsed.extracted_text_length.toLocaleString("en-IN")} characters).`
+        );
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Resume upload failed.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Backend PDF upload & Gemini parsing failed."
+      );
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleExtractFromText() {
+    if (resumeText.trim().length < 20) {
+      setError("Paste at least 20 characters of resume text to analyze.");
+      return;
+    }
+    setExtractingText(true);
+    setError(null);
+    setStatusMessage(null);
+
+    try {
+      const token = await getCurrentSessionAccessToken();
+      if (!token) {
+        throw new Error("Active session expired. Sign in again.");
+      }
+      const res = await extractSkillsFromTextApi(
+        resumeText,
+        targetRoleHint ?? undefined,
+        token
+      );
+      setExtractedSkills(res.skills);
+      setParsedSummary(
+        res.suggested_target_roles.length > 0
+          ? `Suggested roles: ${res.suggested_target_roles.join(", ")}`
+          : ""
+      );
+      await matchExtractedSkillsToCatalog(res.skills);
+      if (res.skills.length === 0) {
+        setError(
+          "No skills were extracted (Gemini AI may be unavailable for the configured model). Try adjusting resume text or select skills directly in Onboarding / Settings."
+        );
+      } else {
+        setStatusMessage(
+          `Extracted ${res.skills.length} skills from text via FastAPI.`
+        );
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Text skill extraction failed."
+      );
+    } finally {
+      setExtractingText(false);
+    }
+  }
+
+  async function handleSaveMatchedSkills() {
+    if (matchedCatalogSkills.length === 0) return;
+    setSavingMatched(true);
+    setError(null);
+
+    try {
+      await saveInferredSkillsFromCatalog(
+        userId,
+        matchedCatalogSkills.map((m) => ({
+          skill_id: m.skill.id,
+          proficiency: m.proficiency,
+          confidence: m.confidence,
+        }))
+      );
+      setStatusMessage(
+        `Saved ${matchedCatalogSkills.length} inferred skill(s) to your Supabase profile ledger (non-verified until assessed).`
+      );
+      onSkillsSaved?.();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not save inferred skills to Supabase."
+      );
+    } finally {
+      setSavingMatched(false);
     }
   }
 
@@ -109,14 +276,24 @@ export function ResumeManagerCard({
         <div>
           <h3 className="flex items-center gap-2 text-base font-bold text-ink">
             <Lock className="h-4 w-4 text-forest" />
-            Private PDF Resume Storage
+            Private PDF Resume Vault &amp; AI Skill Extractor
           </h3>
           <p className="mt-1 text-xs leading-relaxed text-muted">
-            PDF only, max 5 MB. Stored in your private Supabase bucket scoped to
-            your account (AI skill extraction arrives in Phase 3).
+            PDF only, max 5 MB. Uploads securely and extracts structured skills
+            using FastAPI PyMuPDF + Gemini parsing.
           </p>
         </div>
-        <StatusLabel tone="verified" label="Owner-Only Bucket" />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusLabel tone="verified" label="Live AI Extraction API" />
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => setShowTextExtractor((v) => !v)}
+          >
+            {showTextExtractor ? "Hide Text Paste" : "Paste Resume Text"}
+          </Button>
+        </div>
       </div>
 
       <label
@@ -126,22 +303,21 @@ export function ResumeManagerCard({
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => void handleDrop(e)}
-        className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition ${
-          dragging
-            ? "border-forest bg-forest-soft"
-            : "border-line-strong bg-canvas/70 hover:border-forest/60 hover:bg-surface-muted/50"
-        }`}
+        className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition ${dragging
+          ? "border-forest bg-forest-soft"
+          : "border-line-strong bg-canvas/70 hover:border-forest/60 hover:bg-surface-muted/50"
+          }`}
       >
         <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-forest">
           <UploadCloud className="h-5 w-5" />
         </div>
         <p className="text-sm font-semibold text-ink">
           {uploading
-            ? "Uploading PDF securely..."
-            : "Drag & drop your PDF resume here, or click to browse"}
+            ? "Uploading & parsing PDF with FastAPI + Gemini..."
+            : "Drag & drop your PDF resume here, or click to upload & parse"}
         </p>
         <p className="mt-1 text-xs text-muted">
-          Maximum file size 5 MB • Never exposed via public URLs
+          Maximum file size 5 MB • Private bucket + automated NLP extraction
         </p>
         <input
           type="file"
@@ -151,6 +327,27 @@ export function ResumeManagerCard({
           className="hidden"
         />
       </label>
+
+      {showTextExtractor ? (
+        <div className="space-y-3 rounded-2xl border border-line bg-canvas p-4">
+          <Textarea
+            label="Paste Resume Summary / Work History"
+            value={resumeText}
+            onChange={(e) => setResumeText(e.target.value)}
+            placeholder="Paste bullet points from your resume or project descriptions (min 20 characters)..."
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="primary"
+            loading={extractingText}
+            leftIcon={<Sparkles className="h-3.5 w-3.5" />}
+            onClick={() => void handleExtractFromText()}
+          >
+            Extract Skills via API
+          </Button>
+        </div>
+      ) : null}
 
       {error ? (
         <p
@@ -168,6 +365,51 @@ export function ResumeManagerCard({
         >
           {statusMessage}
         </p>
+      ) : null}
+
+      {/* Extracted Skills Preview + Save to Profile */}
+      {extractedSkills.length > 0 ? (
+        <div className="space-y-3 rounded-2xl border border-[#C7BDE4] bg-[#DDD6F3]/35 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-ink">
+                AI Extracted Skills ({extractedSkills.length})
+              </p>
+              {parsedSummary ? (
+                <p className="mt-0.5 text-xs text-muted">{parsedSummary}</p>
+              ) : null}
+            </div>
+            {matchedCatalogSkills.length > 0 ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="primary"
+                loading={savingMatched}
+                leftIcon={<CheckCircle2 className="h-3.5 w-3.5" />}
+                onClick={() => void handleSaveMatchedSkills()}
+              >
+                Save {matchedCatalogSkills.length} Catalog Match(es)
+              </Button>
+            ) : null}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {extractedSkills.map((sk) => (
+              <SkillChip
+                key={`${sk.name}-${sk.category}`}
+                name={`${sk.name} (${Math.round(sk.confidence * 100)}%)`}
+                level={sk.proficiency}
+                status="inferred"
+              />
+            ))}
+          </div>
+
+          <p className="text-[11px] text-muted">
+            Matched catalog skills save as{" "}
+            <strong className="text-ink">inferred</strong> proficiency — never
+            marked verified without assessment.
+          </p>
+        </div>
       ) : null}
 
       {resumes.length === 0 ? (

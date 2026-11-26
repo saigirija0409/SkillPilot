@@ -4,8 +4,8 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  Check,
   Compass,
+  ExternalLink,
   Minus,
   Move,
   Plus,
@@ -23,21 +23,18 @@ import {
   SkeletonCard,
   SkillChip,
   StatusLabel,
-  useToast,
 } from "@/components/ui";
-import {
-  SKILL_PREREQUISITES,
-  SUPPLEMENTAL_DEMO_OPPORTUNITIES,
-  useEmployeeDemo,
-} from "@/lib/demo/employeeDemoStore";
-import {
-  fetchAllCatalogOpportunities,
-  fetchCatalogData,
-  fetchRoleSkillRequirements,
-  fetchUserProfileBundle,
-  type RoleSkillRequirement,
-} from "@/services/profile";
-import type { CareerRole, Opportunity, Skill, UserSkill } from "@/types/database";
+import { SKILL_PREREQUISITES, useEmployeeDemo } from "@/lib/demo/employeeDemoStore";
+import { cleanDisplayText, formatEnumLabel } from "@/lib/formatters";
+import { fetchMlRecommendationsApi, fetchSkillGapApi } from "@/services/api";
+import { getCurrentSessionAccessToken } from "@/services/auth";
+import { fetchCatalogData, fetchUserProfileBundle } from "@/services/profile";
+import type {
+  RecommendedOpportunityDto,
+  SkillGapItemDto,
+  SkillGapResponseDto,
+} from "@/types/api";
+import type { CareerRole, Skill, UserSkill } from "@/types/database";
 
 interface SkillIntelligenceViewProps {
   userId: string;
@@ -56,6 +53,7 @@ interface ConstellationNode {
   requiredLevel: number;
   gap: number;
   importanceWeight: number;
+  priority: string;
   verificationLabel: string;
   prereqs: string[];
   unlocks: string[];
@@ -63,75 +61,71 @@ interface ConstellationNode {
 
 const TIER_COLORS: Record<
   NodeTier,
-  { fill: string; stroke: string; badge: string; label: string }
+  { fill: string; stroke: string; badge: string }
 > = {
   acquired: {
     fill: "#D9E8B5",
     stroke: "#294C3B",
     badge: "Pistachio • Acquired",
-    label: "Target Met",
   },
   developing: {
     fill: "#F9DF91",
     stroke: "#B5891E",
     badge: "Butter • Developing",
-    label: "Developing",
   },
   future: {
     fill: "#DDD6F3",
     stroke: "#5D4E8E",
-    badge: "Lavender • Future Skill",
-    label: "Future / Missing",
+    badge: "Lavender • Missing / Future",
   },
 };
 
 export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
-  const { state: demoState, addOpportunityToRoadmap } = useEmployeeDemo();
-  const { pushToast } = useToast();
+  const { state: demoState } = useEmployeeDemo();
 
   const [loading, setLoading] = useState(true);
-  const [reqLoading, setReqLoading] = useState(false);
+  const [gapLoading, setGapLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [gapError, setGapError] = useState<string | null>(null);
 
   const [roles, setRoles] = useState<CareerRole[]>([]);
   const [allSkills, setAllSkills] = useState<Skill[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState<string>("");
   const [userSkills, setUserSkills] = useState<UserSkill[]>([]);
-  const [requirements, setRequirements] = useState<RoleSkillRequirement[]>([]);
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [skillGapData, setSkillGapData] = useState<SkillGapResponseDto | null>(
+    null
+  );
+  const [mlRecommendations, setMlRecommendations] = useState<
+    RecommendedOpportunityDto[]
+  >([]);
+
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [selectedSkillName, setSelectedSkillName] = useState<string | null>(
     null
   );
 
-  // Interactive zoom & pan controls
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const [dragOrigin, setDragOrigin] = useState({ x: 0, y: 0 });
-
   const [reloadKey, setReloadKey] = useState(0);
 
   function handleRetry() {
     setLoading(true);
     setError(null);
+    setGapError(null);
     setReloadKey((k) => k + 1);
   }
 
   useEffect(() => {
     let active = true;
 
-    Promise.all([
-      fetchCatalogData(),
-      fetchUserProfileBundle(userId),
-      fetchAllCatalogOpportunities(40),
-    ])
-      .then(([catalog, bundle, catalogOpps]) => {
+    Promise.all([fetchCatalogData(), fetchUserProfileBundle(userId)])
+      .then(([catalog, bundle]) => {
         if (!active) return;
         setRoles(catalog.careerRoles);
         setAllSkills(catalog.skills);
         setUserSkills(bundle.userSkills);
-        setOpportunities([...catalogOpps, ...SUPPLEMENTAL_DEMO_OPPORTUNITIES]);
         const defaultRole =
           bundle.profile?.target_role_id ||
           catalog.careerRoles[0]?.id ||
@@ -144,7 +138,7 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
         setError(
           err instanceof Error
             ? err.message
-            : "Unable to load skill intelligence."
+            : "Unable to load catalog or profile."
         );
       })
       .finally(() => {
@@ -160,26 +154,51 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
     if (!selectedRoleId) return;
     let active = true;
 
-    fetchRoleSkillRequirements(selectedRoleId)
-      .then((reqs) => {
-        if (!active) return;
-        setRequirements(reqs);
-        if (reqs[0]?.skills?.name) {
-          setSelectedSkillName((prev) => prev ?? reqs[0]?.skills?.name ?? null);
+    async function loadBackendAnalysis() {
+      const token = await getCurrentSessionAccessToken();
+      if (!token) {
+        if (active) {
+          setGapError("No active session token available.");
+          setGapLoading(false);
         }
-      })
-      .catch(() => {
-        if (!active) return;
-        setRequirements([]);
-      })
-      .finally(() => {
-        if (active) setReqLoading(false);
-      });
+        return;
+      }
 
+      try {
+        const [gapRes, mlRes] = await Promise.all([
+          fetchSkillGapApi(selectedRoleId, token),
+          fetchMlRecommendationsApi(token, {
+            targetRoleId: selectedRoleId,
+            limit: 12,
+          }),
+        ]);
+        if (!active) return;
+        setSkillGapData(gapRes);
+        setMlRecommendations(mlRes.recommendations);
+        setGapError(null);
+        const firstGap = gapRes.gaps[0]?.skill_name || gapRes.strengths[0]?.skill_name;
+        if (firstGap) {
+          setSelectedSkillName((prev) => prev ?? firstGap);
+        }
+      } catch (err) {
+        if (!active) return;
+        setSkillGapData(null);
+        setMlRecommendations([]);
+        setGapError(
+          err instanceof Error
+            ? err.message
+            : "Backend skill-gap analysis failed."
+        );
+      } finally {
+        if (active) setGapLoading(false);
+      }
+    }
+
+    void loadBackendAnalysis();
     return () => {
       active = false;
     };
-  }, [selectedRoleId]);
+  }, [selectedRoleId, reloadKey]);
 
   if (loading) {
     return (
@@ -215,7 +234,7 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
     userSkillMap.set(us.skill_id, us);
   }
 
-  // Merge required role skills + user extra skills so graph shows full constellation
+  // Build graph nodes directly from real backend /api/v1/skills/gap items + user's ledger
   const nodeDraftMap = new Map<
     string,
     {
@@ -224,29 +243,36 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
       category: string;
       currentLevel: number;
       requiredLevel: number;
+      gap: number;
       importanceWeight: number;
+      priority: string;
       verificationLabel: string;
     }
   >();
 
-  for (const req of requirements) {
-    const skillName = req.skills?.name || "Required Skill";
-    const match = userSkillMap.get(req.skill_id);
-    const demoEvidence = demoState.demoSkillEvidence[skillName];
-    nodeDraftMap.set(skillName, {
-      skillId: req.skill_id,
-      name: skillName,
-      category: req.skills?.category || "Core",
-      currentLevel: match?.proficiency ?? 0,
-      requiredLevel: req.required_level,
-      importanceWeight: Number(req.importance_weight),
+  const combinedBackendItems: SkillGapItemDto[] = skillGapData
+    ? [...skillGapData.strengths, ...skillGapData.gaps]
+    : [];
+
+  for (const item of combinedBackendItems) {
+    const match = item.skill_id ? userSkillMap.get(item.skill_id) : undefined;
+    const demoEvidence = demoState.demoSkillEvidence[item.skill_name];
+    nodeDraftMap.set(item.skill_name, {
+      skillId: item.skill_id || item.skill_name,
+      name: item.skill_name,
+      category: item.category || "Core",
+      currentLevel: item.current_level,
+      requiredLevel: item.required_level,
+      gap: Math.max(0, item.gap),
+      importanceWeight: item.importance_weight,
+      priority: item.priority,
       verificationLabel:
         match?.verification_status === "verified"
           ? "Verified Credential"
           : demoEvidence
             ? `Demonstrated (${demoEvidence.scorePct}% Demo Check)`
             : match
-              ? "Self-Reported"
+              ? match.verification_status.replace("_", " ")
               : "Unrecorded",
     });
   }
@@ -260,31 +286,26 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
       category: us.skills?.category || "Recorded",
       currentLevel: us.proficiency,
       requiredLevel: Math.max(3, us.proficiency),
+      gap: 0,
       importanceWeight: 0.1,
-      verificationLabel:
-        us.verification_status === "verified"
-          ? "Verified Credential"
-          : demoState.demoSkillEvidence[skillName]
-            ? "Demonstrated (Demo Check)"
-            : "Self-Reported",
+      priority: "low",
+      verificationLabel: us.verification_status.replace("_", " "),
     });
   }
 
-  // Fallback if role has few nodes so prerequisite constellation stays meaningful
-  if (nodeDraftMap.size < 6) {
-    for (const s of allSkills.slice(0, 8 - nodeDraftMap.size)) {
-      if (!nodeDraftMap.has(s.name)) {
-        const match = userSkillMap.get(s.id);
-        nodeDraftMap.set(s.name, {
-          skillId: s.id,
-          name: s.name,
-          category: s.category,
-          currentLevel: match?.proficiency ?? 0,
-          requiredLevel: 3,
-          importanceWeight: 0.08,
-          verificationLabel: match ? "Self-Reported" : "Future Exploratory",
-        });
-      }
+  if (nodeDraftMap.size === 0) {
+    for (const s of allSkills.slice(0, 6)) {
+      nodeDraftMap.set(s.name, {
+        skillId: s.id,
+        name: s.name,
+        category: s.category,
+        currentLevel: 0,
+        requiredLevel: 3,
+        gap: 3,
+        importanceWeight: 0.1,
+        priority: "medium",
+        verificationLabel: "Catalog Benchmark",
+      });
     }
   }
 
@@ -299,7 +320,6 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
     (n) => categoryFilter === "All" || n.category === categoryFilter
   );
 
-  // Compute deterministic Constellation coordinates across 3 orbital tiers
   const tierGroups: Record<NodeTier, typeof draftNodes> = {
     acquired: [],
     developing: [],
@@ -341,7 +361,6 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
         x: Math.round(70 + step * (idx + 1)),
         y: lane.y + waveOffset,
         tier: lane.tier,
-        gap: Math.max(0, item.requiredLevel - item.currentLevel),
         prereqs,
         unlocks,
       });
@@ -354,26 +373,14 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
     allNodes[0] ??
     null;
 
-  // Overall role readiness from role requirements
-  const totalWeight = requirements.reduce(
-    (acc, r) => acc + Number(r.importance_weight),
-    0
-  );
-  const earnedWeight = requirements.reduce((acc, r) => {
-    const match = userSkillMap.get(r.skill_id);
-    const curr = match?.proficiency ?? 0;
-    const ratio = r.required_level > 0 ? Math.min(1, curr / r.required_level) : 1;
-    return acc + ratio * Number(r.importance_weight);
-  }, 0);
-  const readinessPct =
-    totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * 100) : 0;
+  const readinessPct = skillGapData
+    ? Math.round(skillGapData.overall_readiness_score)
+    : 0;
 
-  const activeRole = roles.find((r) => r.id === selectedRoleId);
-
-  const recommendedOppsForNode = selectedNode
-    ? opportunities
-        .filter((opp) =>
-          opp.skill_tags.some(
+  const matchedRecommendations = selectedNode
+    ? mlRecommendations
+        .filter((rec) =>
+          rec.skill_tags.some(
             (t) =>
               t.toLowerCase().includes(selectedNode.name.toLowerCase()) ||
               selectedNode.name.toLowerCase().includes(t.toLowerCase())
@@ -385,24 +392,54 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
   return (
     <div className="space-y-8">
       <EditorialHeading
-        eyebrow="Workspace • Interactive Skill Constellation"
+        eyebrow="Workspace • Live Skill Constellation"
         title="Living"
         italicAccent="Skill Constellation"
-        subtitle="Explore how acquired, developing, and future skills interconnect for your target role. Drag to pan, zoom to inspect prerequisites, or select any node."
+        subtitle="Interactive skill constellation comparing your current proficiency ledger and prerequisites against target role benchmarks."
         actions={
-          <Link href="/employee/explore">
-            <Button
-              variant="primary"
-              size="sm"
-              rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
-            >
-              Find Matching Learning
-            </Button>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusLabel
+              tone={gapError ? "attention" : "verified"}
+              label={
+                gapError
+                  ? "API Error"
+                  : `Readiness: ${readinessPct}% (${skillGapData?.skills_matched ?? 0}/${skillGapData?.skills_total ?? 0} met)`
+              }
+            />
+            <Link href="/employee/explore">
+              <Button
+                variant="primary"
+                size="sm"
+                rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
+              >
+                ML Recommendations
+              </Button>
+            </Link>
+          </div>
         }
       />
 
-      {/* Role + Category Filters & Color Legend */}
+      {gapError ? (
+        <Card padding="md" className="border-[var(--status-attention-border)] bg-[var(--status-attention-bg)]">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--status-attention-text)]">
+            <span>
+              <strong>Skill-Gap API Error:</strong> {gapError}
+            </span>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                setGapLoading(true);
+                setReloadKey((k) => k + 1);
+              }}
+            >
+              Retry Backend Call
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
+      {/* Controls & Legend */}
       <Card padding="md" className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="w-full sm:max-w-xs">
@@ -410,7 +447,7 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
               label="Target Role Benchmark"
               value={selectedRoleId}
               onChange={(e) => {
-                setReqLoading(true);
+                setGapLoading(true);
                 setSelectedSkillName(null);
                 setSelectedRoleId(e.target.value);
               }}
@@ -431,7 +468,7 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
               Developing ({tierGroups.developing.length})
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[#C7BDE4] bg-[#DDD6F3] px-3 py-1 text-xs font-semibold text-ink">
-              Future Skills ({tierGroups.future.length})
+              Missing / Future ({tierGroups.future.length})
             </span>
           </div>
         </div>
@@ -450,20 +487,21 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
             ))}
           </div>
 
-          <p className="text-xs font-semibold text-forest">
-            {activeRole?.title || "Role"} Readiness: {readinessPct}% weighted match
-          </p>
+          {skillGapData?.top_missing_skills.length ? (
+            <p className="text-xs font-semibold text-[#8C371C]">
+              Top Gaps: {skillGapData.top_missing_skills.join(" • ")}
+            </p>
+          ) : null}
         </div>
       </Card>
 
-      {/* Main Constellation Canvas + Expandable Detail Panel */}
+      {/* Constellation Canvas + Detail Inspector */}
       <div className="grid gap-6 lg:grid-cols-12">
-        <Card padding="sm" className="relative overflow-hidden lg:col-span-8">
-          {/* Zoom & Pan Controls */}
+        <Card padding="sm" className="relative overflow-hidden lg:col-span-8 2xl:col-span-9">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted">
               <Move className="h-3.5 w-3.5 text-forest" />
-              Drag canvas to pan • Zoom {Math.round(zoom * 100)}%
+              Drag to pan • Zoom {Math.round(zoom * 100)}%
             </span>
 
             <div className="flex items-center gap-1.5">
@@ -471,7 +509,9 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
                 size="sm"
                 variant="secondary"
                 aria-label="Zoom out"
-                onClick={() => setZoom((z) => Math.max(0.7, Number((z - 0.15).toFixed(2))))}
+                onClick={() =>
+                  setZoom((z) => Math.max(0.7, Number((z - 0.15).toFixed(2))))
+                }
               >
                 <Minus className="h-3.5 w-3.5" />
               </Button>
@@ -479,7 +519,9 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
                 size="sm"
                 variant="secondary"
                 aria-label="Zoom in"
-                onClick={() => setZoom((z) => Math.min(1.6, Number((z + 0.15).toFixed(2))))}
+                onClick={() =>
+                  setZoom((z) => Math.min(1.6, Number((z + 0.15).toFixed(2))))
+                }
               >
                 <Plus className="h-3.5 w-3.5" />
               </Button>
@@ -498,7 +540,7 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
           </div>
 
           <div
-            className="relative h-[490px] w-full overflow-hidden rounded-b-2xl bg-[radial-gradient(#E2DFD5_1px,transparent_1px)] [background-size:22px_22px] bg-canvas select-none"
+            className="relative h-[520px] xl:h-[600px] w-full overflow-hidden rounded-b-2xl bg-[radial-gradient(#E2DFD5_1px,transparent_1px)] [background-size:22px_22px] bg-canvas select-none"
             onPointerDown={(e) => {
               if ((e.target as HTMLElement).closest("[data-skill-node='true']")) {
                 return;
@@ -517,9 +559,9 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
             onPointerLeave={() => setDragging(false)}
             style={{ cursor: dragging ? "grabbing" : "grab" }}
           >
-            {reqLoading ? (
+            {gapLoading ? (
               <div className="absolute right-4 top-4 z-10 rounded-full border border-line bg-surface px-3 py-1 text-xs font-semibold text-muted">
-                Updating benchmarks...
+                Updating benchmark coverage...
               </div>
             ) : null}
 
@@ -546,7 +588,6 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
               <g
                 transform={`translate(${pan.x + (900 * (1 - zoom)) / 2}, ${pan.y + (475 * (1 - zoom)) / 2}) scale(${zoom})`}
               >
-                {/* Orbital tier guide labels */}
                 <text x="24" y="108" fontSize="11" fontWeight="700" fill="#68736C">
                   ACQUIRED
                 </text>
@@ -570,10 +611,9 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
                   strokeDasharray="4 4"
                 />
                 <text x="24" y="376" fontSize="11" fontWeight="700" fill="#68736C">
-                  FUTURE
+                  MISSING / FUTURE
                 </text>
 
-                {/* Prerequisite connectors */}
                 {allNodes.map((node) =>
                   node.prereqs.map((prereqName) => {
                     const source = nodeByName.get(prereqName);
@@ -598,7 +638,6 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
                   })
                 )}
 
-                {/* Skill Nodes */}
                 {allNodes.map((node) => {
                   const style = TIER_COLORS[node.tier];
                   const isSelected = selectedNode?.name === node.name;
@@ -671,8 +710,7 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
           </div>
         </Card>
 
-        {/* Expandable Skill Detail Inspector */}
-        <div className="space-y-5 lg:col-span-4">
+        <div className="space-y-5 lg:col-span-4 2xl:col-span-3">
           {selectedNode ? (
             <Card padding="lg" className="space-y-5">
               <div className="space-y-2">
@@ -687,8 +725,8 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
                     }
                     label={TIER_COLORS[selectedNode.tier].badge}
                   />
-                  <span className="text-xs font-semibold text-muted">
-                    Weight {Math.round(selectedNode.importanceWeight * 100)}%
+                  <span className="text-xs font-bold uppercase text-muted">
+                    Priority: {selectedNode.priority}
                   </span>
                 </div>
 
@@ -705,10 +743,10 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
 
               <div className="space-y-2 rounded-2xl border border-line bg-canvas p-4">
                 <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="text-muted">Proficiency Progress</span>
+                  <span className="text-muted">Backend Gap Analysis</span>
                   <span className="text-forest">
-                    {selectedNode.currentLevel}/5 current vs{" "}
-                    {selectedNode.requiredLevel}/5 target
+                    {selectedNode.currentLevel}/5 vs{" "}
+                    {selectedNode.requiredLevel}/5
                   </span>
                 </div>
                 <ProgressBar
@@ -721,145 +759,126 @@ export function SkillIntelligenceView({ userId }: SkillIntelligenceViewProps) {
                 <p className="text-xs text-muted">
                   {selectedNode.gap === 0
                     ? "Target met for this role benchmark."
-                    : `Priority skill gap: +${selectedNode.gap} level${selectedNode.gap > 1 ? "s" : ""} recommended.`}
+                    : `Skill gap: -${selectedNode.gap} level${selectedNode.gap > 1 ? "s" : ""} (Weight ${Math.round(selectedNode.importanceWeight * 100)}%)`}
                 </p>
               </div>
 
-              {/* Prerequisites & Unlocks */}
-              <div className="space-y-3">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                    Prerequisites ({selectedNode.prereqs.length})
-                  </p>
-                  {selectedNode.prereqs.length === 0 ? (
-                    <p className="mt-1 text-xs text-muted">
-                      Foundational entry skill — no prior nodes required.
-                    </p>
-                  ) : (
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {selectedNode.prereqs.map((p) => (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => setSelectedSkillName(p)}
-                          className="rounded-full border border-line bg-canvas px-2.5 py-1 text-xs font-semibold text-ink hover:border-forest cursor-pointer"
-                        >
-                          {p}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                    Unlocks Downstream ({selectedNode.unlocks.length})
-                  </p>
-                  {selectedNode.unlocks.length === 0 ? (
-                    <p className="mt-1 text-xs text-muted">
-                      Advanced milestone skill node.
-                    </p>
-                  ) : (
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {selectedNode.unlocks.map((u) => (
-                        <button
-                          key={u}
-                          type="button"
-                          onClick={() => setSelectedSkillName(u)}
-                          className="rounded-full border border-[#C7BDE4] bg-[#DDD6F3]/60 px-2.5 py-1 text-xs font-semibold text-ink hover:border-forest cursor-pointer"
-                        >
-                          {u}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
+                  Prerequisites &amp; Unlocks
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedNode.prereqs.map((p) => (
+                    <button
+                      key={`pre-${p}`}
+                      type="button"
+                      onClick={() => setSelectedSkillName(p)}
+                      className="rounded-full border border-line bg-canvas px-2.5 py-1 text-xs font-semibold text-ink hover:border-forest cursor-pointer"
+                    >
+                      Requires: {p}
+                    </button>
+                  ))}
+                  {selectedNode.unlocks.map((u) => (
+                    <button
+                      key={`unl-${u}`}
+                      type="button"
+                      onClick={() => setSelectedSkillName(u)}
+                      className="rounded-full border border-[#C7BDE4] bg-[#DDD6F3]/60 px-2.5 py-1 text-xs font-semibold text-ink hover:border-forest cursor-pointer"
+                    >
+                      Unlocks: {u}
+                    </button>
+                  ))}
+                  {selectedNode.prereqs.length === 0 &&
+                  selectedNode.unlocks.length === 0 ? (
+                    <span className="text-xs text-muted">
+                      Standalone benchmark skill node.
+                    </span>
+                  ) : null}
                 </div>
               </div>
 
-              {/* Recommended Learning Activities */}
               <div className="space-y-2.5 border-t border-line pt-4">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                  Recommended Learning Activities
+                  ML Ranked Opportunities
                 </p>
-
-                {recommendedOppsForNode.length === 0 ? (
+                {matchedRecommendations.length === 0 ? (
                   <Link href="/employee/explore">
                     <Button size="sm" variant="secondary" className="w-full">
-                      Browse Catalog for {selectedNode.name}
+                      Explore All ML Recommendations
                     </Button>
                   </Link>
                 ) : (
-                  recommendedOppsForNode.map((opp) => {
-                    const inRoadmap = demoState.roadmapItems.some(
-                      (i) => i.sourceOpportunityId === opp.id
-                    );
-                    return (
-                      <div
-                        key={opp.id}
-                        className="rounded-xl border border-line bg-canvas p-3 space-y-2"
-                      >
-                        <p className="text-xs font-bold text-ink">{opp.title}</p>
-                        <div className="flex items-center justify-between gap-2 text-[11px] text-muted">
-                          <span>
-                            {opp.estimated_hours} hrs •{" "}
-                            {opp.cost_inr === 0
-                              ? "Free"
-                              : `₹${opp.cost_inr.toLocaleString("en-IN")}`}
-                          </span>
-                          <Button
-                            size="sm"
-                            variant={inRoadmap ? "pastel" : "secondary"}
-                            leftIcon={
-                              inRoadmap ? (
-                                <Check className="h-3 w-3" />
-                              ) : undefined
-                            }
-                            onClick={() => {
-                              const added = addOpportunityToRoadmap(opp, 30);
-                              pushToast({
-                                tone: added ? "success" : "info",
-                                title: added
-                                  ? "Added to 30-day Roadmap (+15 XP)"
-                                  : "Already on your Roadmap",
-                                description: opp.title,
-                              });
-                            }}
-                          >
-                            {inRoadmap ? "On Roadmap" : "Add to Plan"}
-                          </Button>
-                        </div>
+                  matchedRecommendations.map((rec) => (
+                    <div
+                      key={rec.opportunity_id}
+                      className="rounded-xl border border-line bg-canvas p-3 space-y-1.5 text-xs"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-bold text-ink line-clamp-2">
+                          {cleanDisplayText(rec.title)}
+                        </p>
+                        <StatusLabel
+                          tone="verified"
+                          label={`${Math.round(rec.relevance_score * 100)}% Match`}
+                          className="shrink-0"
+                        />
                       </div>
-                    );
-                  })
+                      <p className="text-muted">
+                        {cleanDisplayText(rec.match_reason)} •{" "}
+                        {formatEnumLabel(rec.format)}
+                      </p>
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-[11px] font-semibold text-forest">
+                          {rec.cost_inr === 0
+                            ? "Free"
+                            : `₹${rec.cost_inr.toLocaleString("en-IN")} INR`}
+                        </span>
+                        {rec.url ? (
+                          <a
+                            href={rec.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-semibold text-forest underline"
+                          >
+                            Source <ExternalLink className="h-3 w-3" />
+                          </a>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </Card>
           ) : null}
 
-          <PastelCard
-            tone="pistachio"
-            eyebrow="Integrity Safeguard"
-            title={`${readinessPct}% Role Benchmark`}
-            description="Your recorded Supabase ledger stays cleanly isolated from demo roadmap and assessment previews."
-          />
+          {skillGapData ? (
+            <PastelCard
+              tone="pistachio"
+              eyebrow="Live Backend Calculation"
+              title={`${readinessPct}% ${skillGapData.target_role_title} Readiness`}
+              description={`${skillGapData.skills_matched} of ${skillGapData.skills_total} required competencies matched.`}
+            />
+          ) : null}
         </div>
       </div>
 
-      {/* Recorded Ledger Summary */}
       <Card padding="lg">
         <div className="flex items-center gap-2 pb-2">
           <Compass className="h-4 w-4 text-forest" />
           <h2 className="font-editorial text-2xl text-ink">
-            Live Supabase Skill Ledger ({userSkills.length})
+            Active Skill Ledger ({userSkills.length})
           </h2>
         </div>
         {userSkills.length === 0 ? (
           <p className="text-sm text-muted">
-            No skills recorded yet. Visit{" "}
-            <Link href="/onboarding" className="font-semibold text-forest underline">
-              Onboarding
+            No skills recorded yet. Upload a PDF resume in{" "}
+            <Link
+              href="/employee/settings"
+              className="font-semibold text-forest underline"
+            >
+              Settings
             </Link>{" "}
-            or Settings to add baseline competencies.
+            to extract skills automatically.
           </p>
         ) : (
           <div className="mt-3 flex flex-wrap gap-2">

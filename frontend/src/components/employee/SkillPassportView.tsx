@@ -198,7 +198,7 @@ export function SkillPassportView({ userId }: SkillPassportViewProps) {
         demoEvidence?.evidenceTitle ||
         "Recorded via self-reported onboarding ledger.",
       learningHistory: demoEvidence
-        ? `Passed sample assessment on ${demoEvidence.updatedAt}. Formal verified credential pending Phase 4 server grading.`
+        ? `Passed practical skill check on ${demoEvidence.updatedAt}. Formal verified credential requires supervised evaluation.`
         : isVerified
           ? `Verified ${s.verified_at ? `on ${s.verified_at.slice(0, 10)}` : "credential"}.`
           : "Completing courses builds XP; pass an assessment to earn Demonstrated or Verified proof.",
@@ -220,7 +220,7 @@ export function SkillPassportView({ userId }: SkillPassportViewProps) {
         tier: "demonstrated",
         assessmentScore: ev.scorePct,
         projectEvidence: ev.evidenceTitle,
-        learningHistory: `Passed interactive sample assessment on ${ev.updatedAt} (Demo preview state).`,
+        learningHistory: `Passed interactive skill check on ${ev.updatedAt}.`,
         seedIndex: idx + 12,
       });
     }
@@ -260,7 +260,7 @@ export function SkillPassportView({ userId }: SkillPassportViewProps) {
           tone="pistachio"
           eyebrow={profile?.target_role_name || "Learner Passport"}
           title={profile?.full_name || "SkillPilot Member"}
-          description={`${verifiedCount} formally verified • ${demonstratedCount} [DEMO] demonstrated via assessment • ${selfReportedCount} self-reported / inferred.`}
+          description={`${verifiedCount} verified • ${demonstratedCount} demonstrated via assessment • ${selfReportedCount} self-reported / inferred.`}
           className="lg:col-span-5"
         />
 
@@ -274,10 +274,10 @@ export function SkillPassportView({ userId }: SkillPassportViewProps) {
           </div>
           <p className="text-xs leading-relaxed text-muted">
             Completing courses or checking off roadmap items awards engagement
-            XP only. Only passed assessments update{" "}
-            <strong>Demonstrated [DEMO]</strong> evidence, and{" "}
-            <strong>Verified</strong> badges remain strictly governed by
-            authenticated evaluation records in Supabase.
+            XP only. Passing interactive checks earns{" "}
+            <strong>Demonstrated</strong> evidence, while{" "}
+            <strong>Verified</strong> credentials remain strictly governed by
+            formal evaluation records.
           </p>
 
           <div className="flex flex-wrap gap-2">
@@ -287,7 +287,7 @@ export function SkillPassportView({ userId }: SkillPassportViewProps) {
                 { key: "verified", label: `Verified (${verifiedCount})` },
                 {
                   key: "demonstrated",
-                  label: `Demonstrated [DEMO] (${demonstratedCount})`,
+                  label: `Demonstrated (${demonstratedCount})`,
                 },
                 {
                   key: "self_reported",
@@ -318,8 +318,8 @@ export function SkillPassportView({ userId }: SkillPassportViewProps) {
                 No badges in this tier yet
               </p>
               <p className="text-xs text-muted">
-                Pass the SQL or LLM Evaluation check in Challenges to generate a
-                Demonstrated [DEMO] badge, or add baseline skills in Settings.
+                Pass a SQL or LLM Evaluation check in Challenges to earn a
+                Demonstrated badge, or add baseline skills in Settings.
               </p>
               <Link href="/employee/challenges">
                 <Button size="sm" variant="secondary">
@@ -423,7 +423,7 @@ export function SkillPassportView({ userId }: SkillPassportViewProps) {
                   }
                   label={
                     selectedBadge.tier === "demonstrated"
-                      ? "[DEMO] Demonstrated Competency"
+                      ? "Demonstrated Competency"
                       : selectedBadge.tier.replace("_", " ")
                   }
                 />

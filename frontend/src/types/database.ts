@@ -86,6 +86,8 @@ export interface Opportunity {
   estimated_hours: number;
   cost_inr: number;
   format: string;
+  deadline_at?: string | null;
+  url?: string | null;
   source_type: "demo_seed" | "internal" | "live_external";
   is_demo: boolean;
 }

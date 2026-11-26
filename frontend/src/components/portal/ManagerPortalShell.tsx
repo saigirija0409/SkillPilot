@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   BarChart3,
   Bot,
@@ -21,6 +21,9 @@ import {
 } from "@/components/portal/PortalLayoutFrame";
 import { ToastProvider } from "@/components/ui";
 import { useManagerDemo } from "@/lib/demo/managerDemoStore";
+import { fetchManagerAnalyticsApi } from "@/services/api";
+import { getCurrentSessionAccessToken } from "@/services/auth";
+import type { ManagerAnalyticsResponseDto } from "@/types/api";
 import type { AccountType } from "@/types/database";
 
 const MANAGER_NAV_GROUPS: PortalNavGroup[] = [
@@ -96,10 +99,31 @@ const MANAGER_NAV_GROUPS: PortalNavGroup[] = [
   },
 ];
 
+interface ManagerOrgContextValue {
+  organizationId: string | null;
+  analytics: ManagerAnalyticsResponseDto | null;
+  analyticsLoading: boolean;
+  analyticsError: string | null;
+  retryAnalytics: () => void;
+}
+
+const ManagerOrgContext = createContext<ManagerOrgContextValue>({
+  organizationId: null,
+  analytics: null,
+  analyticsLoading: false,
+  analyticsError: null,
+  retryAnalytics: () => {},
+});
+
+export function useManagerOrganizationData() {
+  return useContext(ManagerOrgContext);
+}
+
 interface ManagerPortalShellProps {
   userEmail: string;
   fullName: string;
   accountType: AccountType;
+  organizationId: string | null;
   children: React.ReactNode;
 }
 
@@ -107,9 +131,58 @@ export function ManagerPortalShell({
   userEmail,
   fullName,
   accountType,
+  organizationId,
   children,
 }: ManagerPortalShellProps) {
   const { managerState, sponsorships } = useManagerDemo();
+  const [analytics, setAnalytics] =
+    useState<ManagerAnalyticsResponseDto | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(
+    Boolean(organizationId)
+  );
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    if (!organizationId) {
+      return;
+    }
+    let active = true;
+
+    async function loadAnalytics(orgId: string) {
+      const token = await getCurrentSessionAccessToken();
+      if (!token) {
+        if (active) {
+          setAnalyticsError("No active session token available.");
+          setAnalyticsLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const res = await fetchManagerAnalyticsApi(orgId, token);
+        if (!active) return;
+        setAnalytics(res);
+        setAnalyticsError(null);
+      } catch (err) {
+        if (!active) return;
+        setAnalytics(null);
+        setAnalyticsError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load manager workforce analytics."
+        );
+      } finally {
+        if (active) setAnalyticsLoading(false);
+      }
+    }
+
+    void loadAnalytics(organizationId);
+    return () => {
+      active = false;
+    };
+  }, [organizationId, reloadKey]);
+
   const pendingCount = sponsorships.filter(
     (s) => s.status === "Pending Review (Demo)"
   ).length;
@@ -123,25 +196,46 @@ export function ManagerPortalShell({
     ),
   }));
 
+  function retryAnalytics() {
+    if (!organizationId) return;
+    setAnalyticsLoading(true);
+    setAnalyticsError(null);
+    setReloadKey((k) => k + 1);
+  }
+
   return (
     <ToastProvider>
-      <PortalLayoutFrame
-        portalName="Manager Portal"
-        portalBadge="Workforce Intel"
-        portalVariant="manager"
-        organizationLabel={managerState.organizationDisplayName}
-        groups={groupsWithBadges}
-        userEmail={userEmail}
-        fullName={fullName}
-        accountType={accountType}
-        settingsHref="/manager/settings"
-        switchPortalLink={{
-          label: "Open Employee Portal",
-          href: "/employee/overview",
+      <ManagerOrgContext.Provider
+        value={{
+          organizationId,
+          analytics,
+          analyticsLoading,
+          analyticsError,
+          retryAnalytics,
         }}
       >
-        {children}
-      </PortalLayoutFrame>
+        <PortalLayoutFrame
+          portalName="Manager Portal"
+          portalBadge="Workforce Intel"
+          portalVariant="manager"
+          organizationLabel={
+            organizationId
+              ? `Org: ${organizationId.slice(0, 8)}…`
+              : managerState.organizationDisplayName
+          }
+          groups={groupsWithBadges}
+          userEmail={userEmail}
+          fullName={fullName}
+          accountType={accountType}
+          settingsHref="/manager/settings"
+          switchPortalLink={{
+            label: "Open Employee Portal",
+            href: "/employee/overview",
+          }}
+        >
+          {children}
+        </PortalLayoutFrame>
+      </ManagerOrgContext.Provider>
     </ToastProvider>
   );
 }

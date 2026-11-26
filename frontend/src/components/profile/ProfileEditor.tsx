@@ -321,6 +321,8 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
         userId={userId}
         resumes={resumes}
         onResumesChanged={setResumes}
+        targetRoleHint={profile?.target_role_name}
+        onSkillsSaved={() => setReloadKey((k) => k + 1)}
       />
 
       {/* Local Notification & Privacy Controls (isolated demo settings, no unsupported DB writes) */}
@@ -328,7 +330,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
-              [DEMO] Local Journal Preferences
+              Journal Preferences
             </p>
             <h2 className="flex items-center gap-2 font-editorial text-2xl text-ink">
               <Bell className="h-5 w-5 text-forest" />
@@ -389,7 +391,7 @@ export function ProfileEditor({ userId }: ProfileEditorProps) {
           <div className="rounded-xl border border-line bg-canvas p-3.5 text-xs space-y-2">
             <span className="flex items-center gap-1.5 font-bold text-ink">
               <ShieldCheck className="h-3.5 w-3.5 text-forest" />
-              Skill Passport Visibility (Demo Preview)
+              Skill Passport Visibility
             </span>
             <select
               value={demoState.notificationPrefs.publicPassportMode}

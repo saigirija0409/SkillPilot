@@ -144,7 +144,7 @@ export const INITIAL_DEMO_ROADMAP: DemoRoadmapItem[] = [
   {
     id: "rm-1",
     bucket: 30,
-    title: "[DEMO] SQL Analytics & Window Functions Lab",
+    title: "SQL Analytics & Window Functions Lab",
     type: "Course",
     category: "Data & Analytics",
     estimatedHours: 6,
@@ -156,7 +156,7 @@ export const INITIAL_DEMO_ROADMAP: DemoRoadmapItem[] = [
   {
     id: "rm-2",
     bucket: 30,
-    title: "[DEMO] Statistics & Experiment Design Workshop",
+    title: "Statistics & Experiment Design Workshop",
     type: "Workshop",
     category: "Data & Analytics",
     estimatedHours: 8,
@@ -169,8 +169,8 @@ export const INITIAL_DEMO_ROADMAP: DemoRoadmapItem[] = [
   {
     id: "rm-3",
     bucket: 60,
-    title: "[DEMO] Applied Scikit-Learn Pipelines & Evaluation",
-    type: "Open Source / Build Sprint",
+    title: "Applied Scikit-Learn Pipelines & Evaluation",
+    type: "Build Sprint",
     category: "AI & ML",
     estimatedHours: 12,
     costInr: 2499,
@@ -182,26 +182,26 @@ export const INITIAL_DEMO_ROADMAP: DemoRoadmapItem[] = [
   {
     id: "rm-4",
     bucket: 60,
-    title: "[DEMO] FastAPI & Docker Container Reliability Lab",
+    title: "FastAPI & Docker Container Reliability Lab",
     type: "Internal Workshop",
     category: "Engineering",
     estimatedHours: 7,
     costInr: 0,
     scheduledDate: "2027-01-18",
-    notes: "Async endpoints, Pydantic schemas, and clean healthchecks.",
+    notes: "Async endpoints, schema validation, and clean service healthchecks.",
     completed: false,
   },
   {
     id: "rm-5",
     bucket: 90,
-    title: "[DEMO] Agentic RAG & Evaluation Capstone Hackathon",
+    title: "Agentic RAG & Evaluation Capstone Hackathon",
     type: "Hackathon",
     category: "AI & ML",
     estimatedHours: 16,
     costInr: 3500,
     scheduledDate: "2027-02-08",
     prerequisiteTitle: "Applied Scikit-Learn Pipelines & Evaluation",
-    notes: "Build an evaluation harness and retrieval copilot workflow.",
+    notes: "Build an evaluation harness and retrieval assistant workflow.",
     completed: false,
   },
 ];
@@ -209,7 +209,7 @@ export const INITIAL_DEMO_ROADMAP: DemoRoadmapItem[] = [
 export const INITIAL_SPONSORSHIP_REQUESTS: DemoSponsorshipRequest[] = [
   {
     id: "sr-demo-1",
-    title: "[DEMO] Cloud Containers & IaC Certification Lab",
+    title: "Cloud Containers & IaC Certification Lab",
     provider: "SkillPilot Partner Catalog",
     targetSkill: "Docker & Containers",
     amountInr: 3999,
@@ -219,7 +219,7 @@ export const INITIAL_SPONSORSHIP_REQUESTS: DemoSponsorshipRequest[] = [
       "Closes an intermediate infrastructure gap ahead of Q1 microservices migration.",
     status: "Pending Review (Demo)",
     submittedAt: "2026-11-24",
-    requesterName: "Demo Learner",
+    requesterName: "Ananya Rao",
   },
 ];
 
@@ -227,8 +227,8 @@ export const INITIAL_COPILOT_MESSAGES: DemoCopilotMessage[] = [
   {
     id: "cp-welcome",
     role: "assistant",
-    text: "Hello! I'm your Career Copilot preview. I can inspect your live Supabase baseline alongside your demo roadmap & saved opportunities to suggest realistic next steps. Full Gemini function-calling execution connects in Phase 5.",
-    toolsUsed: ["demo_context_reader", "inr_budget_matcher"],
+    text: "Hello! I'm your Career Copilot preview. I combine your live profile, skill-gap analysis, and ML-ranked opportunities to help plan your next learning steps.",
+    toolsUsed: ["profile_context", "inr_budget_matcher"],
     suggestedLinks: [
       { label: "Inspect Skill Constellation", href: "/employee/skills" },
       { label: "Open Explorer", href: "/employee/explore" },
@@ -262,8 +262,8 @@ export const INITIAL_EMPLOYEE_DEMO_STATE: EmployeeDemoState = {
 export const SUPPLEMENTAL_DEMO_OPPORTUNITIES: Opportunity[] = [
   {
     id: "demo-hack-1",
-    title: "[DEMO] FinTech & AI Agents Weekend Hackathon (India)",
-    provider: "Bengaluru Builder Collective [DEMO]",
+    title: "FinTech & AI Agents Weekend Hackathon (India)",
+    provider: "Bengaluru Builder Collective",
     opportunity_type: "hackathon",
     description:
       "48-hour collaborative build sprint shipping compliant financial retrieval assistants with transparent evaluation suites.",
@@ -277,8 +277,8 @@ export const SUPPLEMENTAL_DEMO_OPPORTUNITIES: Opportunity[] = [
   },
   {
     id: "demo-comp-2",
-    title: "[DEMO] National Open-Source Telemetry Competition",
-    provider: "OSS India Fellowship [DEMO]",
+    title: "National Open-Source Telemetry Competition",
+    provider: "OSS India Fellowship",
     opportunity_type: "competition",
     description:
       "Fix latency regressions, add OpenTelemetry traces, and document benchmark results across community Python repositories.",
@@ -292,8 +292,8 @@ export const SUPPLEMENTAL_DEMO_OPPORTUNITIES: Opportunity[] = [
   },
   {
     id: "demo-oss-3",
-    title: "[DEMO] Open-Source Data Quality Sprint: SQL & dbt",
-    provider: "Data Guild Mentors [DEMO]",
+    title: "Open-Source Data Quality Sprint: SQL & dbt",
+    provider: "Data Guild Mentors",
     opportunity_type: "open_source",
     description:
       "Contribute validated PostgreSQL transformation tests and schema contracts under mentor code review.",
@@ -307,11 +307,11 @@ export const SUPPLEMENTAL_DEMO_OPPORTUNITIES: Opportunity[] = [
   },
   {
     id: "demo-int-4",
-    title: "[DEMO] Internal Engineering Guild: Production Postgres & RLS",
-    provider: "Internal Platform Team [DEMO]",
+    title: "Internal Engineering Guild: Production Postgres & RLS",
+    provider: "Internal Platform Team",
     opportunity_type: "internal",
     description:
-      "Live internal brown-bag workshop covering multi-tenant Row Level Security policies, indexing, and safe schema migrations.",
+      "Live internal workshop covering multi-tenant Row Level Security policies, indexing, and safe schema migrations.",
     skill_tags: ["SQL", "Identity & Access Management", "System Architecture"],
     difficulty_level: "advanced",
     estimated_hours: 5,
@@ -325,7 +325,7 @@ export const SUPPLEMENTAL_DEMO_OPPORTUNITIES: Opportunity[] = [
 export const SAMPLE_ASSESSMENTS: DemoAssessment[] = [
   {
     id: "assess-sql-retention",
-    title: "[DEMO] SQL Analytics & Retention Assessment",
+    title: "SQL Analytics & Retention Assessment",
     skillName: "SQL",
     durationMinutes: 8,
     passingScore: 75,
@@ -391,7 +391,7 @@ export const SAMPLE_ASSESSMENTS: DemoAssessment[] = [
   },
   {
     id: "assess-ai-eval",
-    title: "[DEMO] LLM Evaluation & Retrieval Engineering Check",
+    title: "LLM Evaluation & Retrieval Engineering Check",
     skillName: "NLP & Generative AI",
     durationMinutes: 10,
     passingScore: 75,
@@ -462,9 +462,9 @@ export const DEMO_INDUSTRY_ARTICLES = [
     id: "pulse-evals",
     topic: "AI Engineering",
     readTime: "6 min read",
-    publishedLabel: "[DEMO] Issue 14 • Feature",
+    publishedLabel: "Issue 14 • Feature",
     featured: true,
-    title: "[DEMO] Why Deterministic Evals Outlast Clever Prompt Tweaks",
+    title: "Why Deterministic Evals Outlast Clever Prompt Tweaks",
     summary:
       "Production AI teams are shifting engineering hours from ad-hoc prompt crafting toward structured regression datasets, grounded citations, and cost telemetry.",
     whyItMatters:
@@ -480,9 +480,9 @@ export const DEMO_INDUSTRY_ARTICLES = [
     id: "pulse-sql",
     topic: "Data & Analytics",
     readTime: "4 min read",
-    publishedLabel: "[DEMO] Data Dispatch",
+    publishedLabel: "Data Dispatch",
     featured: false,
-    title: "[DEMO] Modern SQL Window Functions for Product Retention Cohorts",
+    title: "Modern SQL Window Functions for Product Retention Cohorts",
     summary:
       "Before reaching for complex BI stacks, analytics teams use CTE pipelines, LAG/LEAD offsets, and clean schema contracts in PostgreSQL.",
     whyItMatters:
@@ -497,10 +497,10 @@ export const DEMO_INDUSTRY_ARTICLES = [
     id: "pulse-iam",
     topic: "Cloud & Security",
     readTime: "5 min read",
-    publishedLabel: "[DEMO] Security Brief",
+    publishedLabel: "Security Brief",
     publishedAt: "Nov 2026",
     featured: false,
-    title: "[DEMO] Asymmetric JWKS Verification in Zero-Trust FastAPI Services",
+    title: "Asymmetric JWKS Verification in Zero-Trust FastAPI Services",
     summary:
       "Modern auth stacks rotate EC/RSA public keys over JWKS endpoints rather than distributing symmetric secrets to downstream microservices.",
     whyItMatters:
@@ -515,9 +515,9 @@ export const DEMO_INDUSTRY_ARTICLES = [
     id: "pulse-india-upskill",
     topic: "Product & Leadership",
     readTime: "4 min read",
-    publishedLabel: "[DEMO] Workforce Report",
+    publishedLabel: "Workforce Report",
     featured: false,
-    title: "[DEMO] Micro-Sprints & INR Training Sponsorships in Indian Tech Teams",
+    title: "Micro-Sprints & INR Training Sponsorships in Indian Tech Teams",
     summary:
       "High-retention engineering orgs fund targeted ₹2,500–₹8,000 workshops tied to measurable 60-day delivery milestones rather than unused annual MOOC licenses.",
     whyItMatters:
@@ -698,7 +698,7 @@ export function useEmployeeDemo() {
         const newItem: DemoRoadmapItem = {
           id: `rm-opp-${opp.id}`,
           bucket,
-          title: opp.is_demo ? opp.title : `[CATALOG] ${opp.title}`,
+          title: opp.title,
           type: opp.opportunity_type.replace("_", " "),
           category: opp.skill_tags[0] ?? "General Upskilling",
           estimatedHours: opp.estimated_hours,

@@ -384,8 +384,8 @@ export function PortalLayoutFrame({
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8 sm:px-10 sm:py-10">
+        {/* Page Content — Full-width workspace utilization beside sidebar */}
+        <main className="w-full min-w-0 flex-1 px-4 py-6 sm:px-6 md:px-8 xl:px-10 xl:py-9">
           {children}
         </main>
       </div>

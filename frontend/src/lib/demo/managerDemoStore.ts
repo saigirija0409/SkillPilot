@@ -58,7 +58,7 @@ export interface DemoEmployeeProfile {
 export const DEMO_TEAM_EMPLOYEES: DemoEmployeeProfile[] = [
   {
     id: "emp-ananya",
-    name: "Ananya Rao [DEMO]",
+    name: "Ananya Rao",
     initials: "AR",
     role: "Associate Data Engineer",
     department: "Data Science",
@@ -83,7 +83,7 @@ export const DEMO_TEAM_EMPLOYEES: DemoEmployeeProfile[] = [
   },
   {
     id: "emp-rohan",
-    name: "Rohan Kulkarni [DEMO]",
+    name: "Rohan Kulkarni",
     initials: "RK",
     role: "Senior Backend Engineer",
     department: "Engineering",
@@ -107,7 +107,7 @@ export const DEMO_TEAM_EMPLOYEES: DemoEmployeeProfile[] = [
   },
   {
     id: "emp-meera",
-    name: "Meera Nair [DEMO]",
+    name: "Meera Nair",
     initials: "MN",
     role: "Product Frontend Engineer",
     department: "Frontend",
@@ -130,7 +130,7 @@ export const DEMO_TEAM_EMPLOYEES: DemoEmployeeProfile[] = [
   },
   {
     id: "emp-kabir",
-    name: "Kabir Verma [DEMO]",
+    name: "Kabir Verma",
     initials: "KV",
     role: "Platform Cloud Architect",
     department: "Cloud",
@@ -153,7 +153,7 @@ export const DEMO_TEAM_EMPLOYEES: DemoEmployeeProfile[] = [
   },
   {
     id: "emp-diya",
-    name: "Diya Sengupta [DEMO]",
+    name: "Diya Sengupta",
     initials: "DS",
     role: "BI & Analytics Lead",
     department: "Analytics",
@@ -177,7 +177,7 @@ export const DEMO_TEAM_EMPLOYEES: DemoEmployeeProfile[] = [
   },
   {
     id: "emp-arjun",
-    name: "Arjun Menon [DEMO]",
+    name: "Arjun Menon",
     initials: "AM",
     role: "Applied ML Specialist",
     department: "Data Science",
@@ -218,7 +218,7 @@ export interface ProjectPreset {
 export const SAMPLE_PROJECT_PRESETS: ProjectPreset[] = [
   {
     id: "proj-ai-copilot",
-    name: "[DEMO] Enterprise AI Career Copilot",
+    name: "Enterprise AI Career Copilot",
     timeline: "Q1 (10 Weeks)",
     summary:
       "Multi-agent retrieval workflow with FastAPI orchestration, vector SQL retrieval, and evaluation pipelines.",
@@ -231,7 +231,7 @@ export const SAMPLE_PROJECT_PRESETS: ProjectPreset[] = [
   },
   {
     id: "proj-cloud-modern",
-    name: "[DEMO] Zero-Trust Cloud Migration",
+    name: "Zero-Trust Cloud Migration",
     timeline: "Q2 (12 Weeks)",
     summary:
       "Containerized multi-region deployment with automated CI/CD observability and hardened IAM.",
@@ -243,7 +243,7 @@ export const SAMPLE_PROJECT_PRESETS: ProjectPreset[] = [
   },
   {
     id: "proj-telemetry",
-    name: "[DEMO] Executive Telemetry Warehouse",
+    name: "Executive Telemetry Warehouse",
     timeline: "Q1 (8 Weeks)",
     summary:
       "Cohort retention modeling, SQL warehouse contracts, and interactive competency dashboards.",
@@ -268,7 +268,7 @@ export interface ManagerTrainingCatalogItem {
 export const MANAGER_TRAINING_CATALOG: ManagerTrainingCatalogItem[] = [
   {
     id: "tr-genai-eval",
-    title: "[DEMO] Applied Generative AI & Evaluation Workshop",
+    title: "Applied Generative AI & Evaluation Workshop",
     targetSkill: "Generative AI",
     departmentFocus: "Data Science",
     durationHours: 14,
@@ -277,7 +277,7 @@ export const MANAGER_TRAINING_CATALOG: ManagerTrainingCatalogItem[] = [
   },
   {
     id: "tr-cloud-sec",
-    title: "[DEMO] Production Cloud & Container Hardening Lab",
+    title: "Production Cloud & Container Hardening Lab",
     targetSkill: "Cloud Computing",
     departmentFocus: "Engineering",
     durationHours: 16,
@@ -286,7 +286,7 @@ export const MANAGER_TRAINING_CATALOG: ManagerTrainingCatalogItem[] = [
   },
   {
     id: "tr-devops-cicd",
-    title: "[DEMO] Zero-Downtime CI/CD & DevOps Sprint",
+    title: "Zero-Downtime CI/CD & DevOps Sprint",
     targetSkill: "DevOps",
     departmentFocus: "Cloud",
     durationHours: 12,
@@ -295,7 +295,7 @@ export const MANAGER_TRAINING_CATALOG: ManagerTrainingCatalogItem[] = [
   },
   {
     id: "tr-sql-lake",
-    title: "[DEMO] Cohort Retention & Postgres Performance Lab",
+    title: "Cohort Retention & Postgres Performance Lab",
     targetSkill: "SQL",
     departmentFocus: "Analytics",
     durationHours: 8,
@@ -304,7 +304,7 @@ export const MANAGER_TRAINING_CATALOG: ManagerTrainingCatalogItem[] = [
   },
   {
     id: "tr-dataviz-ui",
-    title: "[DEMO] Interactive Telemetry Visualization Studio",
+    title: "Interactive Telemetry Visualization Studio",
     targetSkill: "Data Visualization",
     departmentFocus: "Frontend",
     durationHours: 10,
@@ -340,7 +340,7 @@ export interface ManagerDemoState {
 }
 
 export const INITIAL_MANAGER_DEMO_STATE: ManagerDemoState = {
-  organizationDisplayName: "SkillPilot India Engineering [DEMO Org]",
+  organizationDisplayName: "SkillPilot India Engineering",
   totalTrainingBudgetInr: 60000,
   budgetAllocations: {
     "Data Science": 25,
@@ -359,7 +359,7 @@ export const INITIAL_MANAGER_DEMO_STATE: ManagerDemoState = {
     {
       id: "mgr-cp-0",
       role: "assistant",
-      text: "Welcome to Manager Copilot preview. I combine your organizational skill matrix, live project readiness weights, INR training budget, and shared sponsorship requests. Live Gemini server orchestration connects in Phase 5.",
+      text: "Welcome to Manager Copilot. I bring together your organizational skill matrix, project readiness targets, INR training budget, and team sponsorship requests.",
       actions: [
         { label: "Inspect Skill Heatmap", href: "/manager/skills" },
         { label: "Review Sponsorships", href: "/manager/sponsorship" },

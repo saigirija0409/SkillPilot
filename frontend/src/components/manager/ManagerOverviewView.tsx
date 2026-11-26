@@ -12,17 +12,20 @@ import {
   CalendarRange,
   Grid3X3,
   HandCoins,
+  RefreshCw,
   ShieldCheck,
   Sparkles,
   Users,
 } from "lucide-react";
 
+import { useManagerOrganizationData } from "@/components/portal/ManagerPortalShell";
 import {
   Button,
   Card,
   PastelCard,
   ProgressBar,
   SkillChip,
+  SkeletonCard,
   StatusLabel,
 } from "@/components/ui";
 import {
@@ -48,18 +51,20 @@ const DEPT_SVG_NODES: Array<{
   cy: number;
   fill: string;
 }> = [
-  { dept: "Data Science", cx: 78, cy: 62, fill: "#D9E8B5" },
-  { dept: "Engineering", cx: 210, cy: 48, fill: "#F9DF91" },
-  { dept: "Cloud", cx: 332, cy: 68, fill: "#DDD6F3" },
-  { dept: "Analytics", cx: 122, cy: 158, fill: "#F4C9B4" },
-  { dept: "Frontend", cx: 288, cy: 156, fill: "#D9E8B5" },
-];
+    { dept: "Data Science", cx: 78, cy: 62, fill: "#D9E8B5" },
+    { dept: "Engineering", cx: 210, cy: 48, fill: "#F9DF91" },
+    { dept: "Cloud", cx: 332, cy: 68, fill: "#DDD6F3" },
+    { dept: "Analytics", cx: 122, cy: 158, fill: "#F4C9B4" },
+    { dept: "Frontend", cx: 288, cy: 156, fill: "#D9E8B5" },
+  ];
 
 export function ManagerOverviewView({
   fullName,
   accountType,
   organizationId,
 }: ManagerOverviewViewProps) {
+  const { analytics, analyticsLoading, analyticsError, retryAnalytics } =
+    useManagerOrganizationData();
   const {
     managerState,
     sponsorships,
@@ -111,6 +116,20 @@ export function ManagerOverviewView({
     };
   }, []);
 
+  if (analyticsLoading) {
+    return (
+      <div className="space-y-6">
+        <SkeletonCard />
+        <div className="grid gap-6 md:grid-cols-3">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </div>
+    );
+  }
+
+  const hasLiveOrgTeam = Boolean(analytics && analytics.team_size > 0);
   const firstName = fullName.split(" ")[0] || "Leader";
   const pendingSponsorships = sponsorships.filter(
     (s) => s.status === "Pending Review (Demo)"
@@ -120,17 +139,18 @@ export function ManagerOverviewView({
     0
   );
 
-  const avgWorkforceReadiness = Math.round(
-    employees.reduce((acc, emp) => acc + emp.progressPct, 0) /
+  const avgWorkforceReadiness = hasLiveOrgTeam
+    ? Math.round(analytics?.avg_readiness_score ?? 0)
+    : Math.round(
+      employees.reduce((acc, emp) => acc + emp.progressPct, 0) /
       Math.max(1, employees.length)
-  );
+    );
 
   const deptEmployees = employees.filter((e) => e.department === selectedDept);
   const deptAvgReadiness = Math.round(
     deptEmployees.reduce((acc, e) => acc + e.progressPct, 0) /
-      Math.max(1, deptEmployees.length)
+    Math.max(1, deptEmployees.length)
   );
-
   const deptSkillAverages = HEATMAP_SKILLS.map((sk) => {
     const avg =
       deptEmployees.reduce((acc, e) => acc + (e.skills[sk.name] ?? 0), 0) /
@@ -138,20 +158,43 @@ export function ManagerOverviewView({
     return { skill: sk.name, avg: Number(avg.toFixed(1)) };
   }).sort((a, b) => a.avg - b.avg);
 
-  const priorityOrgGaps = HEATMAP_SKILLS.map((sk) => {
-    const avg =
-      employees.reduce((acc, e) => acc + (e.skills[sk.name] ?? 0), 0) /
-      Math.max(1, employees.length);
-    return { skill: sk.name, avg: Number(avg.toFixed(1)) };
-  })
-    .sort((a, b) => a.avg - b.avg)
-    .slice(0, 3);
+  const priorityGapHeadline = hasLiveOrgTeam
+    ? analytics?.critical_skill_gaps[0] ||
+    analytics?.skill_heatmap[0]?.skill_name ||
+    "No Critical Org Gaps"
+    : HEATMAP_SKILLS.map((sk) => ({
+      skill: sk.name,
+      avg:
+        employees.reduce((acc, e) => acc + (e.skills[sk.name] ?? 0), 0) /
+        Math.max(1, employees.length),
+    })).sort((a, b) => a.avg - b.avg)[0]?.skill || "Generative AI";
 
   const recentDemonstratedList = Object.values(employeeEvidence);
 
   return (
     <div className="space-y-10">
-      {/* Executive Editorial Hero with Interactive Workforce Capability Map */}
+      {analyticsError ? (
+        <Card
+          padding="md"
+          className="border-[var(--status-attention-border)] bg-[var(--status-attention-bg)]"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--status-attention-text)]">
+            <span>
+              <strong>Live Manager Analytics Error:</strong> {analyticsError}
+            </span>
+            <Button
+              size="sm"
+              variant="secondary"
+              leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
+              onClick={retryAnalytics}
+            >
+              Retry API
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
+      {/* Executive Editorial Hero */}
       <section className="rounded-[28px] border border-line bg-surface p-6 sm:p-10 shadow-[var(--shadow-card)]">
         <div className="grid items-center gap-8 lg:grid-cols-12">
           <div className="space-y-5 lg:col-span-6">
@@ -165,8 +208,12 @@ export function ManagerOverviewView({
                 }
               />
               <StatusLabel
-                tone="inferred"
-                label={managerState.organizationDisplayName}
+                tone={hasLiveOrgTeam ? "verified" : "neutral"}
+                label={
+                  hasLiveOrgTeam
+                    ? `Live Organization (${analytics?.team_size} Members)`
+                    : "Prototype mode · Sample data"
+                }
               />
             </div>
 
@@ -176,10 +223,10 @@ export function ManagerOverviewView({
             </h1>
 
             <p className="max-w-xl text-sm leading-relaxed text-muted sm:text-base">
-              Good day, <strong className="text-ink">{firstName}</strong>.
-              Translate individual employee learning journeys into measurable
-              organizational capability across {DEPARTMENTS.length} core practice
-              groups.
+              Good day, <strong className="text-ink">{firstName}</strong>.{" "}
+              {hasLiveOrgTeam
+                ? `Tracking readiness across ${analytics?.team_size} team members in your organization.`
+                : "Interactive workforce planning view showcasing department capabilities, readiness targets, and sample team benchmarks."}
             </p>
 
             <div className="flex flex-wrap gap-3 pt-1">
@@ -208,7 +255,7 @@ export function ManagerOverviewView({
           <div className="rounded-2xl border border-line bg-canvas p-5 lg:col-span-6 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
-                [DEMO] Interactive Team Capability Map
+                Department Capability Map
               </span>
               <span className="text-xs font-semibold text-forest">
                 Click a department hub
@@ -221,7 +268,6 @@ export function ManagerOverviewView({
               role="img"
               aria-label="Interactive organizational capability growth map"
             >
-              {/* Hub center representing Organizational Capability */}
               {DEPT_SVG_NODES.map((n) => (
                 <line
                   key={`link-${n.dept}`}
@@ -344,9 +390,17 @@ export function ManagerOverviewView({
       <div className="grid gap-6 md:grid-cols-3">
         <PastelCard
           tone="pistachio"
-          eyebrow="[DEMO] Workforce Readiness"
-          title={`${avgWorkforceReadiness}% Avg Progress`}
-          description={`Tracked across ${employees.length} consented team profiles in ${DEPARTMENTS.length} departments.`}
+          eyebrow={
+            hasLiveOrgTeam
+              ? "Live Workforce Readiness"
+              : "Workforce Readiness"
+          }
+          title={`${avgWorkforceReadiness}% Avg Readiness`}
+          description={
+            hasLiveOrgTeam
+              ? `Measured across ${analytics?.team_size} team members in your organization.`
+              : `Calculated across ${employees.length} sample team profiles.`
+          }
           footer={
             <Link href="/manager/teams">
               <Button size="sm" variant="secondary">
@@ -358,9 +412,14 @@ export function ManagerOverviewView({
 
         <PastelCard
           tone="butter"
-          eyebrow="[DEMO] Priority Skill Gaps"
-          title={priorityOrgGaps[0]?.skill || "Generative AI"}
-          description={`Lowest avg coverage: ${priorityOrgGaps.map((g) => `${g.skill} (${g.avg}/5)`).join(" • ")}.`}
+          eyebrow={hasLiveOrgTeam ? "Critical Org Gaps" : "Priority Skill Gaps"}
+          title={priorityGapHeadline}
+          description={
+            hasLiveOrgTeam
+              ? analytics?.top_recommended_trainings.join(" • ") ||
+              "Inspect live team skill heatmap."
+              : "Lowest coverage across core AI & Cloud benchmarks."
+          }
           footer={
             <Link href="/manager/skills">
               <Button size="sm" variant="secondary">
@@ -372,9 +431,9 @@ export function ManagerOverviewView({
 
         <PastelCard
           tone="peach"
-          eyebrow="Shared Sponsorship Queue"
+          eyebrow="Sponsorship Queue"
           title={`${pendingSponsorships.length} Pending (${pendingAmountInr.toLocaleString("en-IN")} INR)`}
-          description={`Remaining demo training budget: ₹${remainingTrainingBudgetInr.toLocaleString("en-IN")} INR.`}
+          description={`Remaining training budget: ₹${remainingTrainingBudgetInr.toLocaleString("en-IN")} INR.`}
           footer={
             <Link href="/manager/sponsorship">
               <Button size="sm" variant="primary">
@@ -385,16 +444,18 @@ export function ManagerOverviewView({
         />
       </div>
 
-      {/* Team Journeys, Recent Demonstrated Proof & Training Actions */}
+      {/* Live Team Members or Demo Journeys + Quick Links */}
       <div className="grid gap-6 lg:grid-cols-12">
         <Card padding="lg" className="lg:col-span-6 space-y-5">
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
-                [DEMO] Team Development Journeys
+                {hasLiveOrgTeam
+                  ? "Live Organization Readiness"
+                  : "Team Development Journeys"}
               </p>
               <h2 className="font-editorial text-3xl text-ink">
-                Recently Demonstrated Proof
+                {hasLiveOrgTeam ? "Authorized Team Roster" : "Team Momentum"}
               </h2>
             </div>
             <Link href="/manager/talent">
@@ -415,11 +476,10 @@ export function ManagerOverviewView({
                     <Award className="h-4 w-4 text-forest shrink-0" />
                     <div>
                       <p className="font-bold text-ink">
-                        Ananya Rao [DEMO] • {ev.skillName}
+                        Assessment Proof • {ev.skillName}
                       </p>
                       <p className="text-muted">
-                        {ev.evidenceTitle} on {ev.updatedAt} (Live synced from
-                        Employee Assessment)
+                        {ev.evidenceTitle} on {ev.updatedAt}
                       </p>
                     </div>
                   </div>
@@ -430,27 +490,50 @@ export function ManagerOverviewView({
           ) : null}
 
           <div className="space-y-3">
-            {employees.slice(0, 3).map((emp) => (
-              <div
-                key={emp.id}
-                className="rounded-xl border border-line bg-canvas p-3.5 space-y-2"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-ink">
-                    {emp.name} ({emp.department})
-                  </span>
-                  <span className="font-semibold text-forest">
-                    {emp.progressPct}% path progress
-                  </span>
+            {hasLiveOrgTeam && analytics
+              ? analytics.members.slice(0, 4).map((m) => (
+                <div
+                  key={m.user_id}
+                  className="rounded-xl border border-line bg-canvas p-3.5 space-y-2"
+                >
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-ink">
+                      {m.full_name || m.email} (
+                      {m.target_role_title || "No Target Role"})
+                    </span>
+                    <span className="font-semibold text-forest">
+                      {m.readiness_score}% readiness
+                    </span>
+                  </div>
+                  <ProgressBar
+                    value={m.readiness_score}
+                    showValue={false}
+                    size="sm"
+                    tone="forest"
+                  />
                 </div>
-                <ProgressBar
-                  value={emp.progressPct}
-                  showValue={false}
-                  size="sm"
-                  tone="forest"
-                />
-              </div>
-            ))}
+              ))
+              : employees.slice(0, 3).map((emp) => (
+                <div
+                  key={emp.id}
+                  className="rounded-xl border border-line bg-canvas p-3.5 space-y-2"
+                >
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-ink">
+                      {emp.name} ({emp.department})
+                    </span>
+                    <span className="font-semibold text-forest">
+                      {emp.progressPct}% progress
+                    </span>
+                  </div>
+                  <ProgressBar
+                    value={emp.progressPct}
+                    showValue={false}
+                    size="sm"
+                    tone="forest"
+                  />
+                </div>
+              ))}
           </div>
         </Card>
 
@@ -461,7 +544,7 @@ export function ManagerOverviewView({
                 Recommended Strategy Actions
               </p>
               <h2 className="font-editorial text-3xl text-ink">
-                Upcoming Cohorts &amp; Links
+                Training Priorities &amp; Portals
               </h2>
             </div>
             <Link href="/manager/training">
@@ -518,18 +601,17 @@ export function ManagerOverviewView({
         </Card>
       </div>
 
-      {/* Authorization & Privacy Integrity Strip */}
       <Card padding="md" className="bg-canvas">
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-forest" />
             <span className="font-semibold text-ink">
-              Org ID: {organizationId || "Unassigned (Demo Mode Active)"}
+              Org ID: {organizationId || "Unassigned (Demo Workforce Preview)"}
             </span>
           </div>
           <span className="text-muted">
             Private resumes &amp; private employee AI threads remain strictly
-            hidden from manager views.
+            hidden from manager endpoints.
           </span>
         </div>
       </Card>

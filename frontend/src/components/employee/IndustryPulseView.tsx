@@ -33,9 +33,9 @@ const TOPICS = [
 ];
 
 const DEMO_SKILL_TRENDS = [
-  { skill: "NLP & Generative AI", shift: "+42% cohort interest [DEMO]", tone: "pistachio" as const },
-  { skill: "SQL", shift: "Core benchmark across 4 roles [DEMO]", tone: "butter" as const },
-  { skill: "Identity & Access Management", shift: "+28% security briefs [DEMO]", tone: "lavender" as const },
+  { skill: "NLP & Generative AI", shift: "+42% learner demand", tone: "pistachio" as const },
+  { skill: "SQL", shift: "Core benchmark across 4 roles", tone: "butter" as const },
+  { skill: "Identity & Access Management", shift: "+28% security briefs", tone: "lavender" as const },
 ];
 
 export function IndustryPulseView() {
@@ -67,10 +67,10 @@ export function IndustryPulseView() {
         eyebrow="Development • Editorial Magazine"
         title="Career"
         italicAccent="Industry Pulse"
-        subtitle="Sample magazine dispatches linking industry engineering shifts to your skill constellation. Live editorial ingestion connects in Phase 5."
+        subtitle="Curated editorial dispatches connecting industry engineering shifts to your target skill constellation."
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <StatusLabel tone="in_progress" label="[DEMO] Sample Content" />
+            <StatusLabel tone="neutral" label="Prototype mode · Sample data" />
             <Button
               size="sm"
               variant={savedOnly ? "primary" : "secondary"}
@@ -129,7 +129,7 @@ export function IndustryPulseView() {
             <div className="space-y-3 lg:col-span-4">
               <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
                 <TrendingUp className="h-3.5 w-3.5 text-forest" />
-                [DEMO] Skill Demand Signals
+                Skill Demand Signals
               </p>
               {DEMO_SKILL_TRENDS.map((t) => (
                 <PastelCard
@@ -267,7 +267,7 @@ export function IndustryPulseView() {
           <div className="space-y-5">
             <PastelCard
               tone="butter"
-              eyebrow="[DEMO] Editorial Summary"
+              eyebrow="Editorial Summary"
               title="Why It Matters for Your Target Role"
               description={activeArticle.whyItMatters}
             />

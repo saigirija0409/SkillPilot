@@ -176,7 +176,7 @@ export function ManagerSettingsView({ userId }: ManagerSettingsViewProps) {
               <div className="flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-forest" />
                 <h2 className="font-editorial text-2xl text-ink">
-                  Organization &amp; Alerts [DEMO]
+                  Organization &amp; Alerts
                 </h2>
               </div>
               <StatusLabel tone="neutral" label="Local Session State" />

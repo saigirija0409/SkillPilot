@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Circle,
   Compass,
+  ExternalLink,
   Flame,
   RefreshCw,
   ShieldCheck,
@@ -25,20 +26,24 @@ import {
   StatusLabel,
   useToast,
 } from "@/components/ui";
+import { useEmployeeDemo } from "@/lib/demo/employeeDemoStore";
+import { cleanDisplayText, formatEnumLabel } from "@/lib/formatters";
 import {
-  SUPPLEMENTAL_DEMO_OPPORTUNITIES,
-  useEmployeeDemo,
-} from "@/lib/demo/employeeDemoStore";
-import { fetchAuthenticatedMe } from "@/services/api";
+  fetchAuthenticatedMe,
+  fetchMlRecommendationsApi,
+  fetchSkillGapApi,
+  listMyRoadmapsApi,
+} from "@/services/api";
 import { getCurrentSessionAccessToken } from "@/services/auth";
-import {
-  fetchDemoOpportunitiesPreview,
-  fetchUserProfileBundle,
-} from "@/services/profile";
+import { fetchUserProfileBundle } from "@/services/profile";
+import type {
+  RecommendedOpportunityDto,
+  RoadmapListItemDto,
+  SkillGapResponseDto,
+} from "@/types/api";
 import type {
   AuthMeResponse,
   LearningPreferences,
-  Opportunity,
   Profile,
   ResumeRecord,
   UserSkill,
@@ -52,33 +57,33 @@ const HERO_MILESTONES = [
   {
     id: "m1",
     step: "01",
-    label: "Baseline",
+    label: "Baseline & CV",
     cx: 54,
     cy: 158,
     color: "#D9E8B5",
-    summary: "Role goal, skills ledger, and INR learning budget logged.",
+    summary: "Role goal, skills ledger, and AI resume parser ready.",
     href: "/employee/settings",
-    cta: "Review Settings",
+    cta: "Upload / Settings",
   },
   {
     id: "m2",
     step: "02",
-    label: "Constellation",
+    label: "Skill Gap API",
     cx: 138,
     cy: 112,
     color: "#F9DF91",
-    summary: "Map prerequisites and spot developing skill gaps interactively.",
+    summary: "Inspect backend skill-gap coverage and prerequisite nodes.",
     href: "/employee/skills",
     cta: "Open Constellation",
   },
   {
     id: "m3",
     step: "03",
-    label: "30/60/90 Sprint",
+    label: "Gemini Plan",
     cx: 226,
     cy: 76,
     color: "#F4C9B4",
-    summary: "Pace workshops, courses, and build sprints around your week.",
+    summary: "Generate your persistent 30/60/90 AI learning roadmap.",
     href: "/employee/roadmap",
     cta: "Open Roadmap",
   },
@@ -89,7 +94,7 @@ const HERO_MILESTONES = [
     cx: 318,
     cy: 38,
     color: "#DDD6F3",
-    summary: "Turn practical assessments into demonstrated proof badges.",
+    summary: "Separate self-reported, inferred, and verified proof cleanly.",
     href: "/employee/passport",
     cta: "View Passport",
   },
@@ -110,11 +115,10 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
   );
   const [resumes, setResumes] = useState<ResumeRecord[]>([]);
 
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [opportunitiesError, setOpportunitiesError] = useState<string | null>(
-    null
-  );
-
+  const [gapData, setGapData] = useState<SkillGapResponseDto | null>(null);
+  const [mlRecs, setMlRecs] = useState<RecommendedOpportunityDto[]>([]);
+  const [mlError, setMlError] = useState<string | null>(null);
+  const [savedRoadmaps, setSavedRoadmaps] = useState<RoadmapListItemDto[]>([]);
   const [authMe, setAuthMe] = useState<AuthMeResponse | null>(null);
   const [apiAuthError, setApiAuthError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -122,7 +126,7 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
   const handleRetry = useCallback(() => {
     setLoading(true);
     setError(null);
-    setOpportunitiesError(null);
+    setMlError(null);
     setApiAuthError(null);
     setReloadKey((k) => k + 1);
   }, []);
@@ -130,66 +134,85 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
   useEffect(() => {
     let active = true;
 
-    Promise.allSettled([
-      fetchUserProfileBundle(userId),
-      fetchDemoOpportunitiesPreview(),
-      getCurrentSessionAccessToken(),
-    ])
-      .then(async ([bundleResult, oppsResult, tokenResult]) => {
+    async function loadWorkspace() {
+      try {
+        const [bundle, token] = await Promise.all([
+          fetchUserProfileBundle(userId),
+          getCurrentSessionAccessToken(),
+        ]);
+
+        if (!active) return;
+        setProfile(bundle.profile);
+        setUserSkills(bundle.userSkills);
+        setPreferences(bundle.preferences);
+        setResumes(bundle.resumes);
+        setError(null);
+
+        if (!token) {
+          setApiAuthError("No active session access token available.");
+          return;
+        }
+
+        const [meRes, mlRes, roadmapsRes, gapRes] = await Promise.allSettled([
+          fetchAuthenticatedMe(token),
+          fetchMlRecommendationsApi(token, {
+            targetRoleId: bundle.profile?.target_role_id || undefined,
+            limit: 4,
+          }),
+          listMyRoadmapsApi(token),
+          bundle.profile?.target_role_id
+            ? fetchSkillGapApi(bundle.profile.target_role_id, token)
+            : Promise.reject(new Error("Target role not selected yet")),
+        ]);
+
         if (!active) return;
 
-        if (bundleResult.status === "fulfilled") {
-          setProfile(bundleResult.value.profile);
-          setUserSkills(bundleResult.value.userSkills);
-          setPreferences(bundleResult.value.preferences);
-          setResumes(bundleResult.value.resumes);
-          setError(null);
+        if (meRes.status === "fulfilled") {
+          setAuthMe(meRes.value);
+          setApiAuthError(null);
         } else {
-          setError(
-            bundleResult.reason instanceof Error
-              ? bundleResult.reason.message
-              : "Failed to load your profile data."
-          );
-        }
-
-        if (oppsResult.status === "fulfilled") {
-          setOpportunities(oppsResult.value);
-          setOpportunitiesError(null);
-        } else {
-          setOpportunities([]);
-          setOpportunitiesError(
-            oppsResult.reason instanceof Error
-              ? oppsResult.reason.message
-              : "Failed to load learning opportunities."
-          );
-        }
-
-        if (tokenResult.status === "fulfilled" && tokenResult.value) {
-          try {
-            const me = await fetchAuthenticatedMe(tokenResult.value);
-            if (active) {
-              setAuthMe(me);
-              setApiAuthError(null);
-            }
-          } catch (apiErr) {
-            if (active) {
-              setAuthMe(null);
-              setApiAuthError(
-                apiErr instanceof Error
-                  ? apiErr.message
-                  : "FastAPI token check failed"
-              );
-            }
-          }
-        } else if (active) {
           setAuthMe(null);
-          setApiAuthError("No active session access token available.");
+          setApiAuthError(
+            meRes.reason instanceof Error
+              ? meRes.reason.message
+              : "FastAPI token check failed"
+          );
         }
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
 
+        if (mlRes.status === "fulfilled") {
+          setMlRecs(mlRes.value.recommendations);
+          setMlError(null);
+        } else {
+          setMlRecs([]);
+          setMlError(
+            mlRes.reason instanceof Error
+              ? mlRes.reason.message
+              : "ML recommendations failed"
+          );
+        }
+
+        if (roadmapsRes.status === "fulfilled") {
+          setSavedRoadmaps(roadmapsRes.value);
+        }
+
+        if (gapRes.status === "fulfilled") {
+          setGapData(gapRes.value);
+        } else {
+          setGapData(null);
+        }
+      } catch (err) {
+        if (!active) return;
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load your workspace baseline."
+        );
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void loadWorkspace();
     return () => {
       active = false;
     };
@@ -234,62 +257,55 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
     HERO_MILESTONES.find((m) => m.id === activeMilestoneId) ?? HERO_MILESTONES[1];
 
   const completedQuestsCount = demoState.quests.filter((q) => q.completed).length;
-  const upcomingActivities = demoState.roadmapItems
-    .filter((item) => !item.completed)
-    .slice(0, 3);
-  const completedRoadmapCount = demoState.roadmapItems.filter(
-    (item) => item.completed
-  ).length;
-
   const activeResume = resumes.find((r) => r.is_active) ?? resumes[0] ?? null;
   const budgetCap = preferences?.budget_inr ?? demoState.budgetInrSim;
 
-  const acquiredCount = userSkills.filter((s) => s.proficiency >= 4).length;
-  const developingCount = userSkills.filter(
-    (s) => s.proficiency > 0 && s.proficiency < 4
-  ).length;
+  const strongCount = gapData
+    ? gapData.strengths.length
+    : userSkills.filter((s) => s.proficiency >= 4).length;
+  const gapCount = gapData
+    ? gapData.gaps.length
+    : userSkills.filter((s) => s.proficiency < 4).length;
   const demonstratedDemoCount = Object.keys(demoState.demoSkillEvidence).length;
-
-  const personalizedCollection = [
-    ...opportunities,
-    ...SUPPLEMENTAL_DEMO_OPPORTUNITIES.slice(0, 2),
-  ]
-    .filter((item) => item.cost_inr <= Math.max(budgetCap, 5000))
-    .slice(0, 4);
 
   const nextRecommended = !profile?.onboarding_completed
     ? {
         eyebrow: "Priority Baseline",
         title: "Finish your 4-step career onboarding",
         description:
-          "Set your target role and INR preferences to anchor every recommendation.",
+          "Set your target role and INR preferences so backend skill-gap and roadmap endpoints personalize accurately.",
         href: "/onboarding",
         cta: "Resume Onboarding",
       }
     : !activeResume
       ? {
-          eyebrow: "Vault Recommendation",
-          title: "Upload your current PDF resume",
+          eyebrow: "AI Skill Extractor",
+          title: "Upload PDF resume for skill extraction",
           description:
-            "Keep an encrypted baseline copy ready in your private vault for skill extraction.",
+            "Parse technical skills automatically into your private competency profile.",
           href: "/employee/settings",
-          cta: "Open Settings & Vault",
+          cta: "Upload Resume & Extract",
         }
-      : {
-          eyebrow: "Suggested Next Step",
-          title:
-            upcomingActivities[0]?.title ||
-            "Practice a SQL or AI Engineering check",
-          description:
-            upcomingActivities[0]?.notes ||
-            "Small 35-minute sessions keep momentum compounding cleanly.",
-          href: upcomingActivities[0] ? "/employee/roadmap" : "/employee/challenges",
-          cta: upcomingActivities[0] ? "Continue Learning" : "Start Assessment",
-        };
+      : savedRoadmaps.length === 0
+        ? {
+            eyebrow: "AI Learning Planner",
+            title: "Generate your first 30/60/90 roadmap",
+            description:
+              "Generate a structured milestone plan tailored to your missing skills and schedule.",
+            href: "/employee/roadmap",
+            cta: "Generate AI Roadmap",
+          }
+        : {
+            eyebrow: "Active Roadmap",
+            title: cleanDisplayText(savedRoadmaps[0].title),
+            description: `${savedRoadmaps[0].duration_days}-day personalized plan • ${formatEnumLabel(savedRoadmaps[0].status)}`,
+            href: "/employee/roadmap",
+            cta: "Continue Learning",
+          };
 
   return (
     <div className="space-y-10">
-      {/* Editorial Hero Banner with Interactive Career Journey SVG */}
+      {/* Editorial Hero Banner */}
       <section className="relative overflow-hidden rounded-[28px] border border-line bg-surface p-6 sm:p-10 shadow-[var(--shadow-card)]">
         <div className="grid items-center gap-8 lg:grid-cols-12">
           <div className="space-y-5 lg:col-span-7">
@@ -298,9 +314,15 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
                 tone="verified"
                 label={`Welcome, ${profile?.full_name || firstName}`}
               />
+              {gapData ? (
+                <StatusLabel
+                  tone="verified"
+                  label={`${Math.round(gapData.overall_readiness_score)}% ${gapData.target_role_title} Readiness`}
+                />
+              ) : null}
               <StatusLabel
                 tone="in_progress"
-                label={`[DEMO] ${demoState.xp} XP • ${demoState.streakDays}-day streak`}
+                label={`${demoState.xp} XP • ${demoState.streakDays}-day streak`}
               />
             </div>
 
@@ -318,8 +340,8 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
               <strong className="font-semibold text-forest">
                 {profile?.target_role_name || "Your Target Role"}
               </strong>
-              . Every reflection, challenge, and scheduled sprint builds toward
-              verifiable mastery.
+              . Personalized around your live skill ledger, ML recommendations,
+              and adaptive learning roadmap.
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -452,16 +474,16 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
         </div>
       </section>
 
-      {/* Daily Quests + Engagement Momentum + Next Recommended Action */}
+      {/* Daily Quests + Engagement Rhythm + Next Recommended Action */}
       <div className="grid gap-6 lg:grid-cols-12">
         <Card padding="lg" className="lg:col-span-7 space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
-                [DEMO] Daily Learning Journal Quests
+                Prototype mode · Sample data
               </p>
               <h2 className="font-editorial text-3xl text-ink">
-                Today&apos;s Gentle Momentum
+                Today&apos;s Learning Quests
               </h2>
             </div>
             <StatusLabel
@@ -487,7 +509,7 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
                         ? `+${quest.xp} Engagement XP logged`
                         : "Quest unchecked",
                       description: willComplete
-                        ? "XP tracks engagement habit — skill verification still requires graded checks."
+                        ? "XP tracks engagement habit — skill verification requires formal assessment."
                         : undefined,
                     });
                   }}
@@ -530,9 +552,9 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
         <div className="space-y-6 lg:col-span-5">
           <PastelCard
             tone="butter"
-            eyebrow="[DEMO] Engagement Rhythm"
+            eyebrow="Learning Streak"
             title={`${demoState.xp} XP • ${demoState.streakDays}-day Streak`}
-            description="Engagement XP rewards daily consistency across quests and roadmap sessions. Formal proficiency remains tied to Skill Passport assessments."
+            description="Engagement XP rewards daily consistency across quests. Skill verification always requires a passed assessment."
             illustration={<Flame className="h-10 w-10 text-forest" />}
             footer={
               <Link href="/employee/challenges">
@@ -567,13 +589,13 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
         </div>
       </div>
 
-      {/* Skill Constellation Preview & Upcoming Roadmap Activities */}
+      {/* Live Skill Gap Summary & Saved Supabase Roadmaps */}
       <div className="grid gap-6 lg:grid-cols-12">
         <Card padding="lg" className="lg:col-span-6 space-y-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
-                Skill Graph Preview
+                Live Skill Readiness
               </p>
               <h2 className="font-editorial text-3xl text-ink">
                 Your Skill Constellation
@@ -592,17 +614,15 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
 
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="rounded-2xl border border-[#C5D89B] bg-[#D9E8B5]/65 p-3">
-              <p className="font-editorial text-3xl text-ink">{acquiredCount}</p>
+              <p className="font-editorial text-3xl text-ink">{strongCount}</p>
               <p className="text-[11px] font-semibold text-ink">
-                Strong (4-5/5)
+                Target Met
               </p>
             </div>
             <div className="rounded-2xl border border-[#EBCD75] bg-[#F9DF91]/65 p-3">
-              <p className="font-editorial text-3xl text-ink">
-                {developingCount}
-              </p>
+              <p className="font-editorial text-3xl text-ink">{gapCount}</p>
               <p className="text-[11px] font-semibold text-ink">
-                Developing (1-3/5)
+                Skill Gaps
               </p>
             </div>
             <div className="rounded-2xl border border-[#C7BDE4] bg-[#DDD6F3]/65 p-3">
@@ -610,7 +630,7 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
                 {demonstratedDemoCount}
               </p>
               <p className="text-[11px] font-semibold text-ink">
-                Demonstrated (Demo)
+                Demonstrated
               </p>
             </div>
           </div>
@@ -618,8 +638,8 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
           <div className="flex flex-wrap gap-2">
             {userSkills.length === 0 ? (
               <p className="text-xs text-muted">
-                Add your baseline skills in Onboarding or Settings to populate
-                your constellation.
+                Upload a resume in Settings or add skills in Onboarding to
+                populate your ledger.
               </p>
             ) : (
               userSkills.slice(0, 6).map((us) => (
@@ -638,10 +658,10 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
-                [DEMO] Adaptive Schedule
+                Active Learning Plans
               </p>
               <h2 className="font-editorial text-3xl text-ink">
-                Upcoming Activities
+                AI Career Roadmaps
               </h2>
             </div>
             <Link href="/employee/roadmap">
@@ -650,59 +670,64 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
                 variant="secondary"
                 rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
               >
-                Full Roadmap
+                Manage Roadmaps
               </Button>
             </Link>
           </div>
 
-          <ProgressBar
-            value={completedRoadmapCount}
-            max={demoState.roadmapItems.length}
-            label="30/60/90 Demo Plan Progress"
-            tone="forest"
-          />
-
-          <div className="space-y-2.5">
-            {upcomingActivities.length === 0 ? (
-              <p className="text-sm text-muted">
-                All current roadmap items completed! Add saved opportunities to
-                queue new sprints.
+          {savedRoadmaps.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-line-strong bg-canvas p-4 text-xs text-muted space-y-2">
+              <p>
+                No persisted Gemini roadmap yet for your account. Generate one in
+                one click on My Roadmap.
               </p>
-            ) : (
-              upcomingActivities.map((item) => (
+              <Link href="/employee/roadmap">
+                <Button size="sm" variant="primary">
+                  Generate AI Roadmap
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              <ProgressBar
+                value={100}
+                label={`${savedRoadmaps.length} active learning plan(s)`}
+                tone="forest"
+              />
+              {savedRoadmaps.slice(0, 3).map((rm) => (
                 <Link
-                  key={item.id}
+                  key={rm.id}
                   href="/employee/roadmap"
                   className="flex items-center justify-between gap-3 rounded-xl border border-line bg-canvas px-4 py-3 transition hover:border-line-strong"
                 >
                   <div className="space-y-0.5">
                     <p className="text-sm font-semibold text-ink">
-                      {item.title}
+                      {cleanDisplayText(rm.title)}
                     </p>
                     <p className="text-xs text-muted">
-                      Day {item.bucket} tier • {item.estimatedHours} hrs • Target:{" "}
-                      {item.scheduledDate}
+                      {rm.duration_days} days •{" "}
+                      {rm.career_roles?.title || "Career Plan"}
                     </p>
                   </div>
-                  <StatusLabel tone="in_progress" label={item.type} />
+                  <StatusLabel tone="verified" label={formatEnumLabel(rm.status)} />
                 </Link>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
 
-      {/* Personalized Opportunity Collections */}
+      {/* Live ML Opportunity Recommendations */}
       <section className="space-y-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
-              Curated For Your INR Budget ({budgetCap.toLocaleString("en-IN")}{" "}
-              INR cap)
-            </p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+                Semantic Skill Matching • Budget Cap ₹{budgetCap.toLocaleString("en-IN")}{" "}
+                INR
+              </p>
             <h2 className="font-editorial text-3xl text-ink">
-              Personalized Opportunity{" "}
-              <span className="italic text-forest">Collections</span>
+              Personalized{" "}
+              <span className="italic text-forest">Recommendations</span>
             </h2>
           </div>
 
@@ -718,76 +743,101 @@ export function EmployeeDashboardView({ userId }: EmployeeDashboardViewProps) {
                 size="sm"
                 rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
               >
-                Explore All Opportunities
+                Explore Full Catalog
               </Button>
             </Link>
           </div>
         </div>
 
-        {opportunitiesError ? (
+        {mlError ? (
           <Card className="border-[var(--status-attention-border)] bg-[var(--status-attention-bg)]">
             <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--status-attention-text)]">
-              <span>{opportunitiesError}</span>
+              <span>
+                <strong>ML Recommendations Error:</strong> {mlError}
+              </span>
               <Button size="sm" variant="secondary" onClick={handleRetry}>
                 Retry
               </Button>
             </div>
           </Card>
+        ) : mlRecs.length === 0 ? (
+          <Card>
+            <p className="text-sm text-muted">
+              No tailored recommendations yet. Confirm your target career role in
+              Settings to generate personalized matches.
+            </p>
+          </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {personalizedCollection.map((opp) => (
-              <Link key={opp.id} href="/employee/explore">
-                <Card interactive padding="md" className="h-full">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2">
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {mlRecs.map((rec) => (
+              <Card key={rec.opportunity_id} interactive padding="md" className="flex h-full flex-col justify-between">
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <Sparkles className="h-4 w-4 text-forest shrink-0" />
-                      <p className="text-sm font-bold text-ink">{opp.title}</p>
+                      <p className="text-sm font-bold text-ink line-clamp-2">
+                        {cleanDisplayText(rec.title)}
+                      </p>
                     </div>
                     <StatusLabel
-                      tone={opp.is_demo ? "in_progress" : "inferred"}
-                      label={opp.is_demo ? "Demo Seed" : opp.opportunity_type}
+                      tone="verified"
+                      label={`${Math.round(rec.relevance_score * 100)}% Match`}
+                      className="shrink-0"
                     />
                   </div>
-                  <p className="mt-2 text-xs leading-relaxed text-muted">
-                    {opp.description}
+                  <p className="mt-2 text-xs leading-relaxed text-muted line-clamp-3">
+                    {cleanDisplayText(rec.match_reason)} —{" "}
+                    {cleanDisplayText(rec.description)}
                   </p>
-                  <p className="mt-3 text-[11px] font-semibold text-muted">
-                    {opp.estimated_hours} hrs •{" "}
-                    {opp.cost_inr === 0
+                </div>
+                <div className="mt-4 flex items-center justify-between border-t border-line pt-3 text-[11px] font-semibold text-muted">
+                  <span>
+                    {rec.estimated_hours} hrs •{" "}
+                    {rec.cost_inr === 0
                       ? "Free (₹0)"
-                      : `₹${opp.cost_inr.toLocaleString("en-IN")} INR`}{" "}
-                    • {opp.difficulty_level}
-                  </p>
-                </Card>
-              </Link>
+                      : `₹${rec.cost_inr.toLocaleString("en-IN")} INR`}
+                  </span>
+                  {rec.url ? (
+                    <a
+                      href={rec.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-forest underline"
+                    >
+                      Open Link <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ) : null}
+                </div>
+              </Card>
             ))}
           </div>
         )}
       </section>
 
-      {/* Compact FastAPI + Supabase Health & Preferences Strip */}
       <Card padding="md" className="bg-canvas">
         <div className="flex flex-wrap items-center justify-between gap-4 text-xs">
           <div className="flex flex-wrap items-center gap-3">
             <ShieldCheck className="h-4 w-4 text-forest" />
             <span className="font-semibold text-ink">
-              FastAPI Session:{" "}
+              Session Status:{" "}
               {authMe?.authenticated
-                ? `Verified (${authMe.auth_method})`
+                ? "Verified Account"
                 : apiAuthError || "Verification check pending"}
             </span>
             <span className="text-muted">•</span>
             <span className="inline-flex items-center gap-1 text-muted">
               <Compass className="h-3.5 w-3.5" />
-              Vault:{" "}
-              {activeResume ? activeResume.file_name : "No PDF uploaded"}
+              Resume Vault:{" "}
+              {activeResume
+                ? `${activeResume.file_name} (${formatEnumLabel(activeResume.parse_status)})`
+                : "No PDF uploaded"}
             </span>
           </div>
           <Link
             href="/employee/settings"
             className="font-semibold text-forest underline underline-offset-4"
           >
-            Manage Profile, Budget &amp; Vault
+            Upload Resume, Preferences &amp; Vault
           </Link>
         </div>
       </Card>

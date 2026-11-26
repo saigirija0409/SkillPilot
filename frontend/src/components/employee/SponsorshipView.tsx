@@ -19,6 +19,7 @@ import {
   SUPPLEMENTAL_DEMO_OPPORTUNITIES,
   useEmployeeDemo,
 } from "@/lib/demo/employeeDemoStore";
+import { cleanDisplayText, formatSponsorshipStatus } from "@/lib/formatters";
 import { fetchAllCatalogOpportunities } from "@/services/profile";
 import type { Opportunity } from "@/types/database";
 
@@ -89,7 +90,7 @@ export function SponsorshipView({ requesterName }: SponsorshipViewProps) {
 
     submitSponsorshipRequest({
       opportunityId: selectedOppId !== "custom" ? selectedOppId : undefined,
-      title: title.startsWith("[DEMO]") ? title.trim() : `[DEMO] ${title.trim()}`,
+      title: title.trim(),
       provider: provider.trim() || "Catalog Partner",
       targetSkill: targetSkill.trim() || "Target Role Skill",
       amountInr: Math.max(0, amountInr),
@@ -119,11 +120,11 @@ export function SponsorshipView({ requesterName }: SponsorshipViewProps) {
         eyebrow="Support • INR Training Sponsorship"
         title="Learning"
         italicAccent="Sponsorship"
-        subtitle="Request team funding in INR for high-impact workshops or certifications. Demo requests persist cleanly across sessions for manager workflow review."
+        subtitle="Request team funding in INR for high-impact workshops or certifications synced with your manager review queue."
         actions={
           <StatusLabel
-            tone="in_progress"
-            label="[DEMO] Shared Approval Queue"
+            tone="neutral"
+            label="Prototype mode · Sample data"
           />
         }
       />
@@ -143,7 +144,7 @@ export function SponsorshipView({ requesterName }: SponsorshipViewProps) {
               <option value="custom">Custom Program / Workshop</option>
               {catalogOpps.map((opp) => (
                 <option key={opp.id} value={opp.id}>
-                  {opp.title} (
+                  {cleanDisplayText(opp.title)} (
                   {opp.cost_inr === 0
                     ? "Free"
                     : `₹${opp.cost_inr.toLocaleString("en-IN")} INR`}
@@ -194,7 +195,7 @@ export function SponsorshipView({ requesterName }: SponsorshipViewProps) {
             />
 
             <Button type="submit" variant="primary" leftIcon={<CheckCircle2 className="h-4 w-4" />}>
-              Submit Demo Sponsorship Request
+              Submit Sponsorship Request
             </Button>
           </form>
         </Card>
@@ -202,9 +203,9 @@ export function SponsorshipView({ requesterName }: SponsorshipViewProps) {
         <div className="space-y-5 lg:col-span-6">
           <PastelCard
             tone="peach"
-            eyebrow="Shared Demo Bridge"
-            title="Connected to Manager Portal"
-            description="Requests submitted here save to isolated demo state so your Manager Portal approval queue can review and approve them without writing to unmigrated production tables."
+            eyebrow="Approval Workflow"
+            title="Connected to Manager Review"
+            description="Requests submitted here sync immediately with your manager's INR sponsorship queue for fast approval tracking."
             illustration={<HandCoins className="h-10 w-10 text-forest" />}
           />
 
@@ -225,7 +226,9 @@ export function SponsorshipView({ requesterName }: SponsorshipViewProps) {
                   className="rounded-2xl border border-line bg-canvas p-4 space-y-2 text-xs"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-ink">{req.title}</p>
+                    <p className="text-sm font-bold text-ink">
+                      {cleanDisplayText(req.title)}
+                    </p>
                     <StatusLabel
                       tone={
                         req.status === "Approved (Demo)"
@@ -234,7 +237,7 @@ export function SponsorshipView({ requesterName }: SponsorshipViewProps) {
                             ? "attention"
                             : "in_progress"
                       }
-                      label={req.status}
+                      label={formatSponsorshipStatus(req.status)}
                     />
                   </div>
                   <p className="font-semibold text-forest">
